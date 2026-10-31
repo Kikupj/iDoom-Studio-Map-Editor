@@ -124,3 +124,21 @@ test('the profile skies build a 3D skybox city, and things keep a height above t
     assert.equal(compileProject(project).stats.sectors, compiled.stats.sectors);
 });
 
+test('things keep their args, and a window can wrap its mid texture up the opening', t => {
+    const modDir = makeMiniMod();
+    t.after(() => fs.rmSync(modDir, { recursive: true, force: true }));
+    const profile = loadProfile({ rootDir: ROOT, env: { IDOOM_PROFILE: 'new-bricks-city', IDOOM_MOD_DIR: modDir } });
+    applyProfile(profile, createResources(profile));
+    const project = clone(STARTER_MAPS.nbc_block);
+    project.things.push({ id: 'marker', type: 26999, x: 0, y: 160, angle: 0, args: [7, 0, 2] });
+    project.smartObjects.push({ id: 'cage', type: 'window', x: -64, y: 120, width: 128, height: 8, floorHeight: 0, ceilingHeight: 96, midTexture: 'TESTWALL', midWrap: true, blocking: true });
+    assert.deepEqual(validateProject(clone(project), {}), []);
+    const compiled = compileProject(project);
+    const marker = compiled.textmap.split('thing').find(block => /type = 26999;/.test(block));
+    assert.match(marker, /arg0 = 7;/);
+    assert.match(marker, /arg2 = 2;/);
+    assert.doesNotMatch(marker, /arg1 =/, 'zero args are left out');
+    assert.match(compiled.textmap, /wrapmidtex = true;/);
+    const plain = compileProject({ ...clone(project), smartObjects: project.smartObjects.map(o => (o.id === 'cage' ? { ...o, midWrap: false } : o)) });
+    assert.doesNotMatch(plain.textmap, /wrapmidtex/);
+});

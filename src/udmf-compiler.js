@@ -617,6 +617,7 @@ function expandProjectToFootprints(project) {
         lowerTexture: obj.lowerTexture || frameTex,
         midTexture: midTex,
         midGrate: Boolean(obj.grate) || (midTex && midTex !== '-'),
+        midWrap: Boolean(obj.midWrap),
         windowBlocking: obj.blocking !== undefined ? Boolean(obj.blocking) : Boolean(obj.grate || (midTex && midTex !== '-')),
         windowAlpha: Number.isFinite(obj.alpha) ? obj.alpha : 1.0,
         sectorSpecial: 0,
@@ -1172,6 +1173,7 @@ function compileProject(project) {
     let dontpegbottom = false;
     let blocking = !twoSided;
     let lineAlpha = 1.0;
+    let wrapMid = false;
 
     let frontMid = !twoSided ? (backFp?.isSolidVoid ? backFp.wallTexture : frontFp.wallTexture) : '-';
     let frontUpper = twoSided ? (frontFp.upperTexture || frontFp.wallTexture) : '-';
@@ -1227,6 +1229,7 @@ function compileProject(project) {
         backMid = winFp.midTexture;
         blocking = Boolean(winFp.windowBlocking);
         lineAlpha = Number.isFinite(winFp.windowAlpha) ? winFp.windowAlpha : 1.0;
+        wrapMid = Boolean(winFp.midWrap);
       } else if (winFp.midGrate) {
         frontMid = 'MIDBARS3';
         backMid = 'MIDBARS3';
@@ -1298,6 +1301,7 @@ function compileProject(project) {
       blocking,
       dontpegtop,
       dontpegbottom,
+      wrapMid,
       alpha: lineAlpha,
       special,
       arg0,
@@ -1467,6 +1471,7 @@ function compileProject(project) {
       x: Math.round(t.x || 0),
       y: Math.round(t.y || 0),
       z: Number.isFinite(t.z) ? t.z : undefined,     // height above the floor (wall decor up a facade)
+      args: Array.isArray(t.args) ? t.args.slice(0, 5).map(v => Math.round(Number(v) || 0)) : undefined,   // arg0-arg4 (a marker's room number)
       angle: Math.round(t.angle || 0),
       type: t.type || 1,
       skill1: true,
@@ -1667,6 +1672,7 @@ function compileProject(project) {
     if (ld.blocking) lines.push('  blocking = true;');
     if (ld.dontpegtop) lines.push('  dontpegtop = true;');
     if (ld.dontpegbottom) lines.push('  dontpegbottom = true;');
+    if (ld.wrapMid) lines.push('  wrapmidtex = true;');
     if (ld.alpha !== undefined && ld.alpha < 0.99) {
       lines.push(`  alpha = ${ld.alpha.toFixed(2)};`);
       lines.push('  renderstyle = "translucent";');
@@ -1716,6 +1722,7 @@ function compileProject(project) {
     lines.push(`  angle = ${th.angle};`);
     lines.push(`  type = ${th.type};`);
     if (th.tid) lines.push(`  id = ${th.tid};`);
+    if (th.args) th.args.forEach((v, i) => { if (v) lines.push(`  arg${i} = ${v};`); });
     lines.push('  skill1 = true;');
     lines.push('  skill2 = true;');
     lines.push('  skill3 = true;');

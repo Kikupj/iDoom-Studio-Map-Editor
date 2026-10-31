@@ -83,7 +83,29 @@
     },
     {
       "id": "gang",
-      "label": "Gang spots"
+      "label": "Raid markers",
+      "classPrefix": [
+        "NBC_Spot",
+        "NBC_LeaderSpot",
+        "NBC_Extraction",
+        "NBC_RoofStart"
+      ],
+      "color": "#ef4444"
+    },
+    {
+      "id": "precinct",
+      "label": "Precinct",
+      "classPrefix": [
+        "NBC_RoomMarker",
+        "NBC_HubBay",
+        "NBC_HQSpot",
+        "NBC_RaidBoard",
+        "NBC_ArmoryLocker",
+        "NBC_SquadRoom",
+        "NBC_Captain",
+        "NBC_Pilot"
+      ],
+      "color": "#3f7cc4"
     },
     {
       "id": "keys",
