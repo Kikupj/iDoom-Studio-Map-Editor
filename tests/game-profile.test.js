@@ -103,3 +103,24 @@ test('a profile map exports as its own lump into the mod, without a ZMAPINFO', t
     project.mapLump = 'MAP01';
     assert.equal(pipeline.exportWad(project, 'plain').modPath, undefined);
 });
+
+test('the profile skies build a 3D skybox city, and things keep a height above the floor', t => {
+    const modDir = makeMiniMod();
+    t.after(() => fs.rmSync(modDir, { recursive: true, force: true }));
+    const profile = loadProfile({ rootDir: ROOT, env: { IDOOM_PROFILE: 'new-bricks-city', IDOOM_MOD_DIR: modDir } });
+    applyProfile(profile, createResources(profile));
+    const project = clone(STARTER_MAPS.nbc_block);
+    project.skybox = 'nbc_dusk';
+    project.things.push({ id: 'decor', type: 26999, x: 0, y: -8, angle: 270, z: 160 });
+    const compiled = compileProject(project);
+    const flat = compileProject({ ...clone(project), skybox: 'sky1' });
+    const towers = compiled.stats.sectors - flat.stats.sectors - 1;
+    assert.ok(towers >= 30, `rings of towers (${towers})`);
+    const heights = [...compiled.textmap.matchAll(/heightfloor = (\d+)/g)].map(m => Number(m[1]));
+    assert.ok(heights.some(h => h > 560), 'the far ring stands tall');
+    assert.match(compiled.textmap, /type = 9080;/, 'a SkyViewpoint');
+    assert.match(compiled.textmap, /height = 160\.0;/, 'the thing keeps its height');
+    // the same name gives the same skyline
+    assert.equal(compileProject(project).stats.sectors, compiled.stats.sectors);
+});
+

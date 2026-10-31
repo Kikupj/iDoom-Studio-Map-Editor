@@ -354,10 +354,10 @@
   },
   "skyboxes": {
     "nbc_dusk": {
-      "name": "Bricks at dusk (NBCSKYDK)",
+      "name": "City skyline at dusk (NBCSKYDK)",
       "texture": "NBCSKYDK",
       "scrollSpeed": 0,
-      "use3DSkybox": false,
+      "use3DSkybox": true,
       "topColor": [
         0.1,
         0.08,
@@ -367,13 +367,84 @@
         0.78,
         0.4,
         0.22
-      ]
+      ],
+      "dioramaStyle": "city",
+      "diorama": {
+        "ground": "CWASPH",
+        "roof": "AXF05",
+        "edge": "CWCONCW",
+        "light": 136,
+        "towerLight": 160,
+        "ceiling": 2048,
+        "viewHeight": 40,
+        "facades": [
+          "CWUQB",
+          "CWUQC",
+          "CWUQF",
+          "CWUEE",
+          "CWUDC",
+          "CWUQB",
+          "CWUQF",
+          "AXW43A",
+          "ADBRICK"
+        ],
+        "rings": [
+          {
+            "radius": [
+              360,
+              540
+            ],
+            "height": [
+              180,
+              340
+            ],
+            "width": [
+              72,
+              160
+            ],
+            "count": 16,
+            "steps": 0.2
+          },
+          {
+            "radius": [
+              580,
+              780
+            ],
+            "height": [
+              320,
+              640
+            ],
+            "width": [
+              64,
+              152
+            ],
+            "count": 22,
+            "steps": 0.4
+          },
+          {
+            "radius": [
+              800,
+              980
+            ],
+            "height": [
+              560,
+              1100
+            ],
+            "width": [
+              48,
+              120
+            ],
+            "count": 28,
+            "steps": 0.5
+          }
+        ]
+      }
     },
     "nbc_day": {
-      "name": "Bricks by day (NBCSKYDY)",
+      "name": "City skyline by day (NBCSKYDY)",
       "texture": "NBCSKYDY",
       "scrollSpeed": 0,
-      "use3DSkybox": false,
+      "use3DSkybox": true,
       "topColor": [
         0.3,
         0.42,
@@ -383,13 +454,84 @@
         0.7,
         0.74,
         0.8
-      ]
+      ],
+      "dioramaStyle": "city",
+      "diorama": {
+        "ground": "CWASPH",
+        "roof": "AXF05",
+        "edge": "CWCONCW",
+        "light": 136,
+        "towerLight": 160,
+        "ceiling": 2048,
+        "viewHeight": 40,
+        "facades": [
+          "CWUQB",
+          "CWUQC",
+          "CWUQF",
+          "CWUEE",
+          "CWUDC",
+          "CWUQB",
+          "CWUQF",
+          "AXW43A",
+          "ADBRICK"
+        ],
+        "rings": [
+          {
+            "radius": [
+              360,
+              540
+            ],
+            "height": [
+              180,
+              340
+            ],
+            "width": [
+              72,
+              160
+            ],
+            "count": 16,
+            "steps": 0.2
+          },
+          {
+            "radius": [
+              580,
+              780
+            ],
+            "height": [
+              320,
+              640
+            ],
+            "width": [
+              64,
+              152
+            ],
+            "count": 22,
+            "steps": 0.4
+          },
+          {
+            "radius": [
+              800,
+              980
+            ],
+            "height": [
+              560,
+              1100
+            ],
+            "width": [
+              48,
+              120
+            ],
+            "count": 28,
+            "steps": 0.5
+          }
+        ]
+      }
     },
     "nbc_morning": {
-      "name": "Bricks in the morning (NBCSKYMR)",
+      "name": "City skyline in the morning (NBCSKYMR)",
       "texture": "NBCSKYMR",
       "scrollSpeed": 0,
-      "use3DSkybox": false,
+      "use3DSkybox": true,
       "topColor": [
         0.36,
         0.44,
@@ -399,7 +541,78 @@
         0.86,
         0.72,
         0.58
-      ]
+      ],
+      "dioramaStyle": "city",
+      "diorama": {
+        "ground": "CWASPH",
+        "roof": "AXF05",
+        "edge": "CWCONCW",
+        "light": 136,
+        "towerLight": 160,
+        "ceiling": 2048,
+        "viewHeight": 40,
+        "facades": [
+          "CWUQB",
+          "CWUQC",
+          "CWUQF",
+          "CWUEE",
+          "CWUDC",
+          "CWUQB",
+          "CWUQF",
+          "AXW43A",
+          "ADBRICK"
+        ],
+        "rings": [
+          {
+            "radius": [
+              360,
+              540
+            ],
+            "height": [
+              180,
+              340
+            ],
+            "width": [
+              72,
+              160
+            ],
+            "count": 16,
+            "steps": 0.2
+          },
+          {
+            "radius": [
+              580,
+              780
+            ],
+            "height": [
+              320,
+              640
+            ],
+            "width": [
+              64,
+              152
+            ],
+            "count": 22,
+            "steps": 0.4
+          },
+          {
+            "radius": [
+              800,
+              980
+            ],
+            "height": [
+              560,
+              1100
+            ],
+            "width": [
+              48,
+              120
+            ],
+            "count": 28,
+            "steps": 0.5
+          }
+        ]
+      }
     }
   },
   "starterMaps": {

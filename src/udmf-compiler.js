@@ -876,6 +876,72 @@ function extractElementaryFaces(vertices, edgeSet) {
 /**
  * Compile high-level project JSON into UDMF text + 3D preview geometry (including 3D Floors & Skyboxes)
  */
+// A 3D skybox city (dioramaStyle 'city'): rings of towers round the SkyViewpoint, nearer ones lower and wider,
+// farther ones taller and thinner, some with a stepped top. The rings, heights, widths and facade textures come from
+// the skybox preset's "diorama" settings (a game profile's); the layout is seeded by the project's name, so a map
+// keeps its skyline. Towers are raised-floor sectors under the sky, their faces the facade textures.
+function addCityDiorama({ skyboxConfig, project, sx, sy, sz, skySecIdx, compiledSectors, compiledLinedefs, getVertexIndex }) {
+  const cfg = skyboxConfig.diorama || {};
+  let seed = 2166136261;
+  for (const ch of String(project.name || 'city')) seed = Math.imul(seed ^ ch.charCodeAt(0), 16777619) >>> 0;
+  const rand = () => {
+    seed = (seed + 0x6D2B79F5) >>> 0;
+    let t = seed;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const between = (range) => range[0] + rand() * (range[1] - range[0]);
+  const textures = cfg.facades && cfg.facades.length ? cfg.facades : ['STARTAN2'];
+  const rings = cfg.rings || [
+    { radius: [380, 560], height: [160, 320], width: [64, 144], count: 14 },
+    { radius: [600, 800], height: [300, 620], width: [72, 160], count: 18 },
+    { radius: [820, 980], height: [520, 980], width: [56, 128], count: 22 }
+  ];
+  const placed = [];
+  const limit = sz - 24;
+  const box = (x, y, w, h, floor, tex, parentIdx) => {
+    const v0 = getVertexIndex(x, y), v1 = getVertexIndex(x + w, y), v2 = getVertexIndex(x + w, y + h), v3 = getVertexIndex(x, y + h);
+    const idx = compiledSectors.length;
+    compiledSectors.push({
+      index: idx, id: `sky_city_${idx}`, sourceId: 'skybox', kind: 'skybox_tower',
+      floorHeight: Math.round(floor), ceilingHeight: cfg.ceiling || 2048, lightLevel: cfg.towerLight || 168,
+      floorTexture: cfg.roof || 'FLAT20', ceilingTexture: 'F_SKY1', sectorSpecial: 0, tag: 0, faces: []
+    });
+    for (const [u, v] of [[v0, v1], [v1, v2], [v2, v3], [v3, v0]]) {
+      compiledLinedefs.push({
+        v1: u, v2: v, twoSided: true, blocking: true, special: 0, arg0: 0, arg1: 0, arg2: 0, arg3: 0,
+        front: { sector: parentIdx, texturetop: '-', texturemiddle: '-', texturebottom: tex },
+        back: { sector: idx, texturetop: '-', texturemiddle: '-', texturebottom: tex }
+      });
+    }
+    return idx;
+  };
+  for (const ring of rings) {
+    const count = ring.count || 12;
+    const offset = rand() * Math.PI * 2;
+    for (let i = 0; i < count; i++) {
+      const angle = offset + (i + rand() * 0.6) * (Math.PI * 2 / count);
+      const r = between(ring.radius);
+      const w = Math.round(between(ring.width) / 8) * 8;
+      const d = Math.round(between(ring.width) / 8) * 8;
+      const x = Math.round((sx + Math.cos(angle) * r - w / 2) / 8) * 8;
+      const y = Math.round((sy + Math.sin(angle) * r - d / 2) / 8) * 8;
+      if (x < sx - limit || y < sy - limit || x + w > sx + limit || y + d > sy + limit) continue;
+      if (placed.some(p => x < p.x + p.w + 16 && p.x < x + w + 16 && y < p.y + p.h + 16 && p.y < y + d + 16)) continue;
+      placed.push({ x, y, w, h: d });
+      const tex = textures[Math.floor(rand() * textures.length)];
+      const height = between(ring.height);
+      const idx = box(x, y, w, d, height, tex, skySecIdx);
+      // a stepped top: a narrower block on the roof
+      if (w >= 64 && d >= 64 && rand() < (ring.steps ?? 0.4)) {
+        const iw = Math.round(w * 0.5 / 8) * 8, id = Math.round(d * 0.5 / 8) * 8;
+        box(x + Math.round((w - iw) / 16) * 8, y + Math.round((d - id) / 16) * 8, iw, id, height + between([64, 200]), tex, idx);
+      }
+    }
+  }
+}
+
 function compileProject(project) {
   let { footprints, threeDVolumes, nextAutoTag } = expandProjectToFootprints(project);
 
@@ -1400,6 +1466,7 @@ function compileProject(project) {
       id: t.id,
       x: Math.round(t.x || 0),
       y: Math.round(t.y || 0),
+      z: Number.isFinite(t.z) ? t.z : undefined,     // height above the floor (wall decor up a facade)
       angle: Math.round(t.angle || 0),
       type: t.type || 1,
       skill1: true,
@@ -1466,15 +1533,16 @@ function compileProject(project) {
     const skySecIdx = compiledSectors.length;
     const isHell = skyboxConfig.dioramaStyle === 'hell';
 
+    const city = skyboxConfig.dioramaStyle === 'city' ? (skyboxConfig.diorama || {}) : null;
     compiledSectors.push({
       index: skySecIdx,
       id: 'skybox_diorama',
       sourceId: 'skybox',
       kind: 'skybox',
       floorHeight: 0,
-      ceilingHeight: 512,
-      lightLevel: isHell ? 160 : 192,
-      floorTexture: isHell ? 'LAVA1' : 'GRASS1',
+      ceilingHeight: city ? (city.ceiling || 2048) : 512,
+      lightLevel: city ? (city.light || 144) : (isHell ? 160 : 192),
+      floorTexture: city ? (city.ground || 'FLAT5_4') : (isHell ? 'LAVA1' : 'GRASS1'),
       ceilingTexture: 'F_SKY1',
       sectorSpecial: 0,
       tag: 0,
@@ -1493,15 +1561,18 @@ function compileProject(project) {
         front: {
           sector: skySecIdx,
           texturetop: '-',
-          texturemiddle: isHell ? 'MARBLE1' : 'STARTAN2',
+          texturemiddle: city ? (city.edge || city.ground || 'STARTAN2') : (isHell ? 'MARBLE1' : 'STARTAN2'),
           texturebottom: '-'
         },
         back: null
       });
     }
 
+    if (skyboxConfig.dioramaStyle === 'city') {
+      addCityDiorama({ skyboxConfig, project, sx, sy, sz, skySecIdx, compiledSectors, compiledLinedefs, getVertexIndex });
+    }
     // Add 4 towering monoliths/skyscrapers in the 3D Skybox Diorama around the SkyViewpoint
-    const towers = [
+    const towers = skyboxConfig.dioramaStyle === 'city' ? [] : [
       { ox: -384, oy: 256, w: 128, h: 128, top: 384 },
       { ox: 256, oy: 320, w: 160, h: 160, top: 448 },
       { ox: -320, oy: -384, w: 144, h: 144, top: 320 },
@@ -1548,7 +1619,7 @@ function compileProject(project) {
     compiledThings.push({
       x: sx,
       y: sy,
-      z: 64,
+      z: city ? (city.viewHeight || 40) : 64,
       angle: 0,
       type: 9080, // ZDoom SkyViewpoint
       skill1: true,
