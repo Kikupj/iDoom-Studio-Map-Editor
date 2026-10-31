@@ -143,7 +143,7 @@ test('things keep their args, and a window can wrap its mid texture up the openi
     assert.doesNotMatch(plain.textmap, /wrapmidtex/);
 });
 
-test('a door behind a doorway header shows its own texture, not the header\'s frame', t => {
+test('a door behind a doorway header shows its own texture, scaled to fit, not the header\'s frame', t => {
     const modDir = makeMiniMod();
     t.after(() => fs.rmSync(modDir, { recursive: true, force: true }));
     const profile = loadProfile({ rootDir: ROOT, env: { IDOOM_PROFILE: 'new-bricks-city', IDOOM_MOD_DIR: modDir } });
@@ -153,7 +153,7 @@ test('a door behind a doorway header shows its own texture, not the header\'s fr
     const y = room.y + 128;
     // a header in the room's floor plan, then a door right behind it
     project.smartObjects.push({ id: 'header', type: 'window', x: room.x + 64, y, width: 56, height: 8, floorHeight: room.floorHeight || 0, ceilingHeight: (room.floorHeight || 0) + 72, wallTexture: 'TESTWALL', upperTexture: 'TESTWALL', lowerTexture: 'TESTWALL', blocking: false });
-    project.smartObjects.push({ id: 'door', type: 'door', x: room.x + 64, y: y + 8, width: 56, height: 8, wallTexture: 'STARTAN2', lock: 1 });
+    project.smartObjects.push({ id: 'door', type: 'door', x: room.x + 64, y: y + 8, width: 56, height: 8, wallTexture: 'STARTAN2', lock: 1, textureScaleX: 2, textureScaleY: 1.7778 });
     assert.deepEqual(validateProject(clone(project), {}), []);
     const compiled = compileProject(project);
     // the line between the header and the shut door: its header-side face is the door's
@@ -173,5 +173,8 @@ test('a door behind a doorway header shows its own texture, not the header\'s fr
     }
     assert.ok(faces.length > 0, 'the header meets the door');
     assert.ok(faces.every(tex => tex === 'STARTAN2'), `the door face shows the door texture (${faces.join(', ')})`);
+    // and the door texture is scaled to fit its face, on every face of the door you can see (from outside it)
+    const doorFaces = sides.filter(sd => sd.texturetop === 'STARTAN2' && !isDoor(sectors[Number(sd.sector)]));
+    assert.ok(doorFaces.length >= 2 && doorFaces.every(sd => sd.scalex_top === '2.0000' && sd.scaley_top === '1.7778'), 'scalex_top / scaley_top on the door faces');
     assert.match(compiled.textmap, /special = 13;/, 'and it is still a locked door');
 });

@@ -590,7 +590,11 @@ function expandProjectToFootprints(project) {
           speed: obj.speed || 16,
           wait: obj.wait || 150,
           doorTex,
-          trackTex
+          trackTex,
+          // the door texture scaled to fit its face (UDMF scalex_top / scaley_top): a texture drawn for one door
+          // height shows whole in a doorway of another
+          scaleX: Number.isFinite(obj.textureScaleX) && obj.textureScaleX > 0 ? obj.textureScaleX : undefined,
+          scaleY: Number.isFinite(obj.textureScaleY) && obj.textureScaleY > 0 ? obj.textureScaleY : undefined
         }
       });
     } else if (obj.type === 'window') {
@@ -1174,6 +1178,7 @@ function compileProject(project) {
     let blocking = !twoSided;
     let lineAlpha = 1.0;
     let wrapMid = false;
+    let frontTopScale = null;      // a door face's texture scale
 
     let frontMid = !twoSided ? (backFp?.isSolidVoid ? backFp.wallTexture : frontFp.wallTexture) : '-';
     let frontUpper = twoSided ? (frontFp.upperTexture || frontFp.wallTexture) : '-';
@@ -1195,6 +1200,7 @@ function compileProject(project) {
     if (twoSided && backFp.kind === 'door') {
       const da = backFp.doorAction || {};
       frontUpper = da.doorTex || 'BIGDOOR2';
+      if (da.scaleX || da.scaleY) frontTopScale = { x: da.scaleX, y: da.scaleY };
       // Keep the upper-face texture pegged to the moving door sector ceiling.
       // DONTPEGTOP would anchor it to the stationary surrounding ceiling, making
       // the texture appear to wipe away instead of moving as one solid panel.
@@ -1238,7 +1244,9 @@ function compileProject(project) {
       // A door behind a window (a doorway header in front of it) keeps its own face: the door texture, moving with
       // the door, not the window's frame
       if (frontFp.kind === 'window' && backFp.kind === 'door') {
-        frontUpper = (backFp.doorAction || {}).doorTex || 'BIGDOOR2';
+        const da = backFp.doorAction || {};
+        frontUpper = da.doorTex || 'BIGDOOR2';
+        if (da.scaleX || da.scaleY) frontTopScale = { x: da.scaleX, y: da.scaleY };
         dontpegtop = false;
       }
     }
@@ -1321,7 +1329,9 @@ function compileProject(project) {
         sector: frontSec,
         texturetop: frontUpper,
         texturemiddle: frontMid,
-        texturebottom: frontLower
+        texturebottom: frontLower,
+        scaleXTop: frontTopScale?.x,
+        scaleYTop: frontTopScale?.y
       },
       back: twoSided ? {
         sector: backSec,
@@ -1703,6 +1713,8 @@ function compileProject(project) {
     if (sd.texturetop && sd.texturetop !== '-') lines.push(`  texturetop = "${sd.texturetop}";`);
     if (sd.texturemiddle && sd.texturemiddle !== '-') lines.push(`  texturemiddle = "${sd.texturemiddle}";`);
     if (sd.texturebottom && sd.texturebottom !== '-') lines.push(`  texturebottom = "${sd.texturebottom}";`);
+    if (sd.scaleXTop) lines.push(`  scalex_top = ${Number(sd.scaleXTop).toFixed(4)};`);
+    if (sd.scaleYTop) lines.push(`  scaley_top = ${Number(sd.scaleYTop).toFixed(4)};`);
     lines.push('}\n');
   });
 
