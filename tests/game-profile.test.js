@@ -142,3 +142,36 @@ test('things keep their args, and a window can wrap its mid texture up the openi
     const plain = compileProject({ ...clone(project), smartObjects: project.smartObjects.map(o => (o.id === 'cage' ? { ...o, midWrap: false } : o)) });
     assert.doesNotMatch(plain.textmap, /wrapmidtex/);
 });
+
+test('a door behind a doorway header shows its own texture, not the header\'s frame', t => {
+    const modDir = makeMiniMod();
+    t.after(() => fs.rmSync(modDir, { recursive: true, force: true }));
+    const profile = loadProfile({ rootDir: ROOT, env: { IDOOM_PROFILE: 'new-bricks-city', IDOOM_MOD_DIR: modDir } });
+    applyProfile(profile, createResources(profile));
+    const project = clone(STARTER_MAPS.nbc_blank);
+    const room = project.rooms[0];
+    const y = room.y + 128;
+    // a header in the room's floor plan, then a door right behind it
+    project.smartObjects.push({ id: 'header', type: 'window', x: room.x + 64, y, width: 56, height: 8, floorHeight: room.floorHeight || 0, ceilingHeight: (room.floorHeight || 0) + 72, wallTexture: 'TESTWALL', upperTexture: 'TESTWALL', lowerTexture: 'TESTWALL', blocking: false });
+    project.smartObjects.push({ id: 'door', type: 'door', x: room.x + 64, y: y + 8, width: 56, height: 8, wallTexture: 'STARTAN2', lock: 1 });
+    assert.deepEqual(validateProject(clone(project), {}), []);
+    const compiled = compileProject(project);
+    // the line between the header and the shut door: its header-side face is the door's
+    const blocks = kind => [...compiled.textmap.matchAll(new RegExp(`${kind} // \\d+[^{]*\\{([^}]*)\\}`, 'g'))]
+        .map(m => Object.fromEntries([...m[1].matchAll(/(\w+) = "?([^";]*)"?;/g)].map(f => [f[1], f[2]])));
+    const sectors = blocks('sector'), sides = blocks('sidedef'), lines = blocks('linedef');
+    const floor = room.floorHeight || 0;
+    const isHeader = s => Number(s.heightfloor || 0) === floor && Number(s.heightceiling) === floor + 72;
+    const isDoor = s => Number(s.heightceiling) === Number(s.heightfloor || 0);
+    const faces = [];
+    for (const l of lines) {
+        if (l.sideback === undefined) continue;
+        const front = sides[Number(l.sidefront)], back = sides[Number(l.sideback)];
+        const fs = sectors[Number(front.sector)], bs = sectors[Number(back.sector)];
+        if (isHeader(fs) && isDoor(bs)) faces.push(front.texturetop);
+        if (isHeader(bs) && isDoor(fs)) faces.push(back.texturetop);
+    }
+    assert.ok(faces.length > 0, 'the header meets the door');
+    assert.ok(faces.every(tex => tex === 'STARTAN2'), `the door face shows the door texture (${faces.join(', ')})`);
+    assert.match(compiled.textmap, /special = 13;/, 'and it is still a locked door');
+});

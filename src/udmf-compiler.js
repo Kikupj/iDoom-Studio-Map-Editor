@@ -1235,6 +1235,12 @@ function compileProject(project) {
         backMid = 'MIDBARS3';
         blocking = true;
       }
+      // A door behind a window (a doorway header in front of it) keeps its own face: the door texture, moving with
+      // the door, not the window's frame
+      if (frontFp.kind === 'window' && backFp.kind === 'door') {
+        frontUpper = (backFp.doorAction || {}).doorTex || 'BIGDOOR2';
+        dontpegtop = false;
+      }
     }
 
     if (twoSided && backFp.kind === 'lift') {
