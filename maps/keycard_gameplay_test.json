@@ -1,0 +1,212 @@
+{
+  "id": "keycard_gameplay_test",
+  "name": "Keycard Gameplay Test — Red / Blue / Yellow",
+  "skybox": "sky1",
+  "rooms": [
+    {
+      "id": "start_room",
+      "name": "Start — try red door, then collect the red keycard",
+      "shape": "rect",
+      "x": 0,
+      "y": 0,
+      "width": 256,
+      "height": 256,
+      "floorHeight": 0,
+      "ceilingHeight": 128,
+      "lightLevel": 176,
+      "theme": "techbase",
+      "floorTexture": "FLOOR4_8",
+      "ceilingTexture": "CEIL3_5",
+      "wallTexture": "STARTAN2"
+    },
+    {
+      "id": "red_room_one",
+      "name": "Red Lock One",
+      "shape": "rect",
+      "x": 256,
+      "y": 0,
+      "width": 256,
+      "height": 256,
+      "floorHeight": 0,
+      "ceilingHeight": 128,
+      "lightLevel": 176,
+      "theme": "techbase",
+      "floorTexture": "FLOOR4_8",
+      "ceilingTexture": "CEIL3_5",
+      "wallTexture": "STARTAN2"
+    },
+    {
+      "id": "red_room_two",
+      "name": "Red Lock Reuse Test",
+      "shape": "rect",
+      "x": 512,
+      "y": 0,
+      "width": 256,
+      "height": 256,
+      "floorHeight": 0,
+      "ceilingHeight": 128,
+      "lightLevel": 176,
+      "theme": "techbase",
+      "floorTexture": "FLOOR4_8",
+      "ceilingTexture": "CEIL3_5",
+      "wallTexture": "STARTAN2"
+    },
+    {
+      "id": "blue_room",
+      "name": "Collect blue keycard, then test blue lock",
+      "shape": "rect",
+      "x": 768,
+      "y": 0,
+      "width": 256,
+      "height": 256,
+      "floorHeight": 0,
+      "ceilingHeight": 128,
+      "lightLevel": 176,
+      "theme": "techbase",
+      "floorTexture": "FLOOR4_8",
+      "ceilingTexture": "CEIL3_5",
+      "wallTexture": "STARTAN2"
+    },
+    {
+      "id": "yellow_room",
+      "name": "Yellow Lock Test",
+      "shape": "rect",
+      "x": 1024,
+      "y": 0,
+      "width": 256,
+      "height": 256,
+      "floorHeight": 0,
+      "ceilingHeight": 128,
+      "lightLevel": 176,
+      "theme": "techbase",
+      "floorTexture": "FLOOR4_8",
+      "ceilingTexture": "CEIL3_5",
+      "wallTexture": "STARTAN2"
+    }
+  ],
+  "smartObjects": [
+    {
+      "id": "red_door_one",
+      "name": "Red Keycard Door — Missing / Wrong Key Test",
+      "type": "door",
+      "x": 240,
+      "y": 96,
+      "width": 32,
+      "height": 64,
+      "theme": "techbase",
+      "wallTexture": "BIGDOOR2",
+      "trackTexture": "DOORTRAK",
+      "lock": 1,
+      "speed": 16,
+      "wait": 150
+    },
+    {
+      "id": "red_door_two",
+      "name": "Second Red Keycard Door — Reuse Test",
+      "type": "door",
+      "x": 496,
+      "y": 96,
+      "width": 32,
+      "height": 64,
+      "theme": "techbase",
+      "wallTexture": "BIGDOOR2",
+      "trackTexture": "DOORTRAK",
+      "lock": 1,
+      "speed": 16,
+      "wait": 150
+    },
+    {
+      "id": "blue_door",
+      "name": "Blue Keycard Door — Wrong Key Test",
+      "type": "door",
+      "x": 752,
+      "y": 96,
+      "width": 32,
+      "height": 64,
+      "theme": "techbase",
+      "wallTexture": "BIGDOOR2",
+      "trackTexture": "DOORTRAK",
+      "lock": 2,
+      "speed": 16,
+      "wait": 150
+    },
+    {
+      "id": "yellow_door",
+      "name": "Yellow Keycard Door — Wrong Key Test",
+      "type": "door",
+      "x": 1008,
+      "y": 96,
+      "width": 32,
+      "height": 64,
+      "theme": "techbase",
+      "wallTexture": "BIGDOOR2",
+      "trackTexture": "DOORTRAK",
+      "lock": 3,
+      "speed": 16,
+      "wait": 150
+    },
+    {
+      "id": "yellow_remote_door",
+      "name": "Yellow Remote Door — Switch Lock Test",
+      "type": "door",
+      "x": 1104,
+      "y": 176,
+      "width": 32,
+      "height": 64,
+      "theme": "techbase",
+      "wallTexture": "BIGDOOR2",
+      "trackTexture": "DOORTRAK",
+      "lock": 3,
+      "remoteOnly": true,
+      "speed": 16,
+      "wait": 150
+    },
+    {
+      "id": "yellow_remote_switch",
+      "name": "Yellow Remote Door Switch",
+      "type": "switch",
+      "x": 1168,
+      "y": 64,
+      "width": 32,
+      "height": 32,
+      "theme": "techbase"
+    }
+  ],
+  "things": [
+    {
+      "id": "test_player_start",
+      "type": 1,
+      "x": 32,
+      "y": 128,
+      "angle": 0
+    },
+    {
+      "id": "test_red_card",
+      "type": 13,
+      "x": 64,
+      "y": 208,
+      "angle": 0
+    },
+    {
+      "id": "test_blue_card",
+      "type": 5,
+      "x": 640,
+      "y": 208,
+      "angle": 0
+    },
+    {
+      "id": "test_yellow_card",
+      "type": 6,
+      "x": 896,
+      "y": 208,
+      "angle": 0
+    }
+  ],
+  "links": [
+    {
+      "sourceId": "yellow_remote_switch",
+      "targetId": "yellow_remote_door",
+      "action": "door"
+    }
+  ]
+}

@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>iDoom Studio — Spaces for Doom</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+
+<body>
+  <!-- Top Unified Apple Titlebar / Toolbar -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="window-controls">
+        <span class="win-dot close"></span>
+        <span class="win-dot min"></span>
+        <span class="win-dot max"></span>
+      </div>
+      <div class="brand-badge">
+        <span class="brand-icon"></span>
+        <div class="brand-titles">
+          <input id="projectNameInput" class="project-title-input" type="text" value="UAC Outpost Alpha"
+            spellcheck="false" />
+          <span id="statusMetrics" class="status-metrics">Compiling UDMF...</span>
+        </div>
+      </div>
+      <div class="toolbar-divider"></div>
+      <div class="history-controls">
+        <button id="undoBtn" class="icon-btn" title="Undo (⌘Z)">↶</button>
+        <button id="redoBtn" class="icon-btn" title="Redo (⌘⇧Z)">↷</button>
+      </div>
+      <div class="dropdown-wrap project-menu-wrap">
+        <button id="projectMenuBtn" class="pill-btn subtle-btn">Project ▾</button>
+        <div id="projectMenu" class="dropdown-menu project-menu hidden">
+          <div class="dropdown-header">Project files</div>
+          <button id="newProjectBtn" class="dropdown-item"><strong>New project</strong><span>Start a clean
+              map</span></button>
+          <label class="project-open-label" for="openProjectSelect">Recent projects
+            <select id="openProjectSelect" class="project-open-select">
+              <option value="">Choose a saved project…</option>
+            </select>
+          </label>
+          <button id="openProjectBtn" class="dropdown-item"><strong>Open selected project</strong><span>Replace the
+              current editor project</span></button>
+          <button id="saveProjectBtn" class="dropdown-item"><strong>Save</strong><span>Write the current project to
+              maps/</span></button>
+          <button id="saveAsProjectBtn" class="dropdown-item"><strong>Save As…</strong><span>Choose a new project
+              filename</span></button>
+        </div>
+      </div>
+      <span id="saveStateStatus" class="save-state-status" title="Editor sync and disk save status">Starting…</span>
+    </div>
+
+    <!-- Center Segmented View Switcher -->
+    <div class="topbar-center">
+      <div class="segmented-control" id="viewModeControl">
+        <button class="seg-btn" data-view="2d">2D Blueprint</button>
+        <button class="seg-btn active" data-view="split">Split Studio</button>
+        <button class="seg-btn" data-view="3d">3D Dollhouse</button>
+        <button class="seg-btn" data-view="walk">First-Person</button>
+      </div>
+    </div>
+
+    <!-- Right Action Cluster -->
+    <div class="topbar-right">
+      <div class="skybox-pill-wrap" title="Choose Map Skybox & Atmosphere (ZMAPINFO + 3D SkyViewpoint)">
+        <span class="sky-icon">🌌</span>
+        <select id="skyboxSelect" class="skybox-select">
+          <option value="diorama_tech">3D Skybox: Orbital Towers</option>
+          <option value="diorama_hell">3D Skybox: Obsidian Monoliths</option>
+          <option value="sky1">Earth Overcast (SKY1)</option>
+          <option value="sky2">Crimson City Dusk (SKY2)</option>
+          <option value="sky3">Hellfire Storm (SKY3)</option>
+        </select>
+      </div>
+
+      <button id="magicRoomBtn" class="pill-btn magic-btn"
+        title="Auto-generate and attach a themed room with doors & encounters">
+        <span class="sparkle">✨</span> Add Smart Wing
+      </button>
+
+      <div class="dropdown-wrap">
+        <button id="templatesBtn" class="pill-btn subtle-btn">Templates ▾</button>
+        <div id="templatesMenu" class="dropdown-menu hidden">
+          <div class="dropdown-header">Starter Spaces</div>
+          <button class="dropdown-item" data-template="uac_outpost">
+            <strong>UAC Outpost Alpha</strong>
+            <span>Multi-room techbase with doors, stairs, lift & courtyard</span>
+          </button>
+          <button class="dropdown-item" data-template="hell_sanctum">
+            <strong>Brimstone Cathedral</strong>
+            <span>Marble arena with lava trenches & Hell Knights</span>
+          </button>
+          <button class="dropdown-item" data-template="blank_studio">
+            <strong>Clean Starter Room</strong>
+            <span>Single 384×384 space ready for sketching</span>
+          </button>
+        </div>
+      </div>
+
+      <button id="inspectUdmfBtn" class="pill-btn subtle-btn" title="View compiled UDMF TEXTMAP code">UDMF Code</button>
+      <button id="mapCheckBtn" class="pill-btn subtle-btn" title="Review map errors, warnings, and analysis limits">Map
+        Check</button>
+      <button id="exportWadBtn" class="pill-btn subtle-btn" title="Save & Download .WAD file">Export .WAD</button>
+      <button id="playUzdoomBtn" class="pill-btn play-btn" title="Compile WAD and launch UZDoom immediately (⌘R)">
+        <span class="play-triangle">▶</span> Play in UZDoom
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Studio Workspace -->
+  <main class="workspace">
+    <!-- Left Floating Apple Tool Dock -->
+    <aside class="tool-dock">
+      <div class="dock-section-label">Tools</div>
+      <button class="tool-btn active" data-tool="select" title="Select, Move & Resize Spaces (V)">
+        <span class="tool-icon">↖</span>
+        <span class="tool-name">Select</span>
+        <kbd>V</kbd>
+      </button>
+      <button class="tool-btn" data-tool="room" title="Drag to Draw Room / Space (R)">
+        <span class="tool-icon">▭</span>
+        <span class="tool-name">Room</span>
+        <kbd>R</kbd>
+      </button>
+      <button class="tool-btn" data-tool="octagon" title="Drag to Draw Octagonal Arena (O)">
+        <span class="tool-icon">⬡</span>
+        <span class="tool-name">Octagon</span>
+        <kbd>O</kbd>
+      </button>
+
+      <div class="dock-divider"></div>
+      <div class="dock-section-label">Smart Objects</div>
+
+      <button class="tool-btn" data-tool="3dfloor"
+        title="Drag a Multi-Level 3D Floor, Half-Floor Mezzanine or Bridge (B)">
+        <span class="tool-icon">🌉</span>
+        <span class="tool-name">3D Floor</span>
+        <kbd>B</kbd>
+      </button>
+      <button class="tool-btn" data-tool="door" title="Drop a Smart Door between rooms (D)">
+        <span class="tool-icon">🚪</span>
+        <span class="tool-name">Door</span>
+        <kbd>D</kbd>
+      </button>
+      <button class="tool-btn" data-tool="window" title="Drop an Observation Window between rooms (W)">
+        <span class="tool-icon">🪟</span>
+        <span class="tool-name">Window</span>
+        <kbd>W</kbd>
+      </button>
+      <button class="tool-btn" data-tool="stairs" title="Drag a Multi-Step Staircase (S)">
+        <span class="tool-icon">🪜</span>
+        <span class="tool-name">Stairs</span>
+        <kbd>S</kbd>
+      </button>
+      <button class="tool-btn" data-tool="lift" title="Drop an Automated Lift Platform (L)">
+        <span class="tool-icon">⇅</span>
+        <span class="tool-name">Lift</span>
+        <kbd>L</kbd>
+      </button>
+      <button class="tool-btn" data-tool="pillar" title="Place Support Column or Crate (P)">
+        <span class="tool-icon">🏛</span>
+        <span class="tool-name">Pillar</span>
+        <kbd>P</kbd>
+      </button>
+      <button class="tool-btn" data-tool="pool" title="Carve Hazard Pool or Skylight (H)">
+        <span class="tool-icon">☣</span>
+        <span class="tool-name">Pool / Sky</span>
+        <kbd>H</kbd>
+      </button>
+      <button class="tool-btn" data-tool="teleporter" title="Place Teleporter Pad (T)">
+        <span class="tool-icon">✦</span>
+        <span class="tool-name">Teleport</span>
+        <kbd>T</kbd>
+      </button>
+      <button class="tool-btn" data-tool="exit" title="Place Level Exit Switch (E)">
+        <span class="tool-icon">🏁</span>
+        <span class="tool-name">Exit</span>
+        <kbd>E</kbd>
+      </button>
+      <button class="tool-btn" data-tool="link" title="Drag Logic Link from Switch/Teleporter to Target (K)">
+        <span class="tool-icon">↝</span>
+        <span class="tool-name">Smart Link</span>
+        <kbd>K</kbd>
+      </button>
+
+      <div class="dock-divider"></div>
+      <div class="dock-section-label">Populate</div>
+
+      <button class="tool-btn" data-tool="thing" title="Place Monsters, Weapons, Keys & Pickups (A)">
+        <span class="tool-icon">👾</span>
+        <span class="tool-name">Actors</span>
+        <kbd>A</kbd>
+      </button>
+    </aside>
+
+    <!-- Center Split / Full Canvas Stage -->
+    <section id="stageContainer" class="stage-container mode-split">
+      <!-- 2D Blueprint Pane -->
+      <div id="pane2D" class="viewport-pane pane-2d">
+        <div class="pane-hud-top">
+          <span class="pane-badge">2D Blueprint</span>
+          <span id="cursorCoordsBadge" class="coords-badge">X: 0 · Y: 0</span>
+          <div class="hud-spacer"></div>
+          <label class="snap-toggle">
+            <input type="checkbox" id="snapGridToggle" checked />
+            <span>Snap 16u</span>
+          </label>
+          <button id="fitView2DBtn" class="hud-mini-btn" title="Center & Fit Map">Fit View</button>
+        </div>
+        <canvas id="canvas2D"></canvas>
+        <div class="pane-hud-bottom">
+          <span>Drag to draw or move · Right-click anywhere to <strong>Play From Here</strong> · Scroll to zoom ·
+            Space+Drag to pan</span>
+        </div>
+      </div>
+
+      <!-- 3D Dollhouse / Walkthrough Pane -->
+      <div id="pane3D" class="viewport-pane pane-3d">
+        <div class="pane-hud-top">
+          <span id="badge3DMode" class="pane-badge accent">3D Live Preview (Freedoom2 Textures)</span>
+          <div class="hud-spacer"></div>
+          <button id="toggleWireframeBtn" class="hud-mini-btn">Edges</button>
+          <button id="toggleCeilingCutBtn" class="hud-mini-btn active"
+            title="Cut away ceilings in Dollhouse mode so you can see inside rooms">Dollhouse Cutaway</button>
+          <button id="resetCam3DBtn" class="hud-mini-btn">Reset Camera</button>
+        </div>
+        <canvas id="canvas3D"></canvas>
+        <div id="walkthroughOverlay" class="walkthrough-overlay hidden">
+          <div class="crosshair">+</div>
+          <div class="walk-instructions">
+            <strong>Walkthrough preview only—no game collision</strong> · Click viewport to lock mouse ·
+            <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Move · <kbd>E</kbd>/<kbd>Q</kbd> Fly Up/Down ·
+            <kbd>Esc</kbd> Release cursor
+          </div>
+        </div>
+        <div class="pane-hud-bottom">
+          <span id="hud3DHint">Left-drag to Orbit · Right-drag to Pan · Scroll to Zoom · Click any room/wall in 3D to
+            select</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Contextual Inspector Panel -->
+    <aside id="inspectorPanel" class="inspector-panel">
+      <div id="inspectorResizer" class="inspector-resizer" title="Drag to resize Inspector panel"></div>
+      <div id="inspectorContent" class="inspector-scroll">
+        <!-- Dynamically populated by app.js based on selection / active tool -->
+      </div>
+    </aside>
+  </main>
+
+  <section id="mapCheckPanel" class="map-check-panel hidden" aria-label="Map Check diagnostics">
+    <div class="map-check-header">
+      <div><strong>Map Check</strong><span id="mapCheckSummary">Run a check to review this map.</span></div>
+      <div class="map-check-actions">
+        <label>Show <select id="mapCheckFilter">
+            <option value="all">All findings</option>
+            <option value="error">Errors</option>
+            <option value="warning">Warnings</option>
+            <option value="info">Info</option>
+          </select></label>
+        <button id="refreshMapCheckBtn" class="hud-mini-btn">Refresh</button>
+        <button id="closeMapCheckBtn" class="hud-mini-btn" aria-label="Close Map Check">✕</button>
+      </div>
+    </div>
+    <div id="mapCheckFindings" class="map-check-findings"></div>
+    <p id="mapCheckLimit" class="map-check-limit">Map Check is a static estimate, not Doom physics. Verify collision,
+      dynamic 3D geometry,
+      and key routes in UZDoom.</p>
+  </section>
+
+  <!-- Right-Click Canvas Context Menu -->
+  <div id="contextMenu" class="context-menu hidden">
+    <button id="ctxPlayHere" class="ctx-item play">▶ Play From Here in UZDoom</button>
+    <div class="ctx-divider"></div>
+    <button id="ctxAddWing" class="ctx-item">✨ Attach Smart Room Wing</button>
+    <button id="ctxAddPlayer" class="ctx-item">🟢 Move Player 1 Start Here</button>
+    <button id="ctxAddImp" class="ctx-item">👾 Place Imp / Monster Here</button>
+    <button id="ctxAddShotgun" class="ctx-item">🔫 Place Shotgun Here</button>
+    <div class="ctx-divider"></div>
+    <button id="ctxDuplicate" class="ctx-item">Duplicate Selected (⌘D)</button>
+    <button id="ctxDelete" class="ctx-item danger">Delete Selected (⌫)</button>
+  </div>
+
+  <!-- Freedoom2 Texture & Flat Browser Modal -->
+  <div id="textureModal" class="modal-backdrop hidden">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div>
+          <h3 id="textureModalTitle">Select Surface Material</h3>
+          <p class="modal-subtitle">Loaded live from <code>freedoom-0.13.0/freedoom2.wad</code></p>
+        </div>
+        <div class="modal-search-wrap">
+          <input id="textureSearchInput" type="search"
+            placeholder="Search 960+ textures (e.g. STARTAN, DOOR, MARBLE, SKY)..." />
+          <button id="closeTextureModalBtn" class="icon-btn">✕</button>
+        </div>
+      </div>
+      <div id="textureGrid" class="texture-grid"></div>
+    </div>
+  </div>
+
+  <!-- Smart Wing Generator Modal -->
+  <div id="magicModal" class="modal-backdrop hidden">
+    <div class="modal-window compact">
+      <div class="modal-header">
+        <div>
+          <h3>✨ Add Smart Architectural Wing</h3>
+          <p class="modal-subtitle">Automatically carves connections, steps, pillars & combat encounters</p>
+        </div>
+        <button id="closeMagicModalBtn" class="icon-btn">✕</button>
+      </div>
+      <div class="magic-form">
+        <div class="form-group">
+          <label>Architectural Theme</label>
+          <select id="magicThemeSelect">
+            <option value="techbase">Starbase Clean (STARTAN2 / SHAWN2)</option>
+            <option value="industrial">Heavy Industrial (METAL1 / SUPPORT3)</option>
+            <option value="bunker">Concrete Bunker (BROWN1 / FLAT5_4)</option>
+            <option value="toxic">Bio-Lab Containment (COMPTALL / Nukage)</option>
+            <option value="outdoor">Open Courtyard (Rock & Sky Ceiling)</option>
+            <option value="hell">Hellfire Sanctum (Marble & Lava Pit)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Connection Style</label>
+          <select id="magicConnectionSelect">
+            <option value="door">Automated Security Doorway</option>
+            <option value="stairs">Elevated Staircase (+64u Height)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Room Geometry</label>
+          <select id="magicShapeSelect">
+            <option value="rect">Rectangular Chamber (384×384)</option>
+            <option value="octagon">Octagonal Arena (448×448)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Encounter Population</label>
+          <select id="magicEncounterSelect">
+            <option value="balanced">Balanced (Guards + Medikit + Shells)</option>
+            <option value="ambush">Heavy Ambush (Deaf Monsters + Rewards)</option>
+            <option value="none">Empty Architecture Only</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button id="confirmMagicBtn" class="pill-btn magic-btn full-width">✨ Generate & Attach Wing</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- UDMF Code Inspector Modal -->
+  <div id="udmfModal" class="modal-backdrop hidden">
+    <div class="modal-window">
+      <div class="modal-header">
+        <div>
+          <h3>Compiled UDMF <code>TEXTMAP</code> Output</h3>
+          <p class="modal-subtitle">Auto-generated vertices, two-sided linedefs, unpegged door tracks & sectors</p>
+        </div>
+        <button id="closeUdmfModalBtn" class="icon-btn">✕</button>
+      </div>
+      <pre id="udmfCodePreview" class="code-preview"></pre>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="/renderer3d.js"></script>
+  <script src="/app.js"></script>
+</body>
+
+</html>

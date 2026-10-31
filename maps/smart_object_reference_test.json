@@ -1,0 +1,204 @@
+{
+  "id": "smart_object_reference_test",
+  "name": "Smart Object Reference Test",
+  "skybox": "sky1",
+  "rooms": [
+    {
+      "id": "reference_room",
+      "name": "All Smart Object Test Bay",
+      "shape": "rect",
+      "x": -1792,
+      "y": -640,
+      "width": 3584,
+      "height": 1280,
+      "floorHeight": 0,
+      "ceilingHeight": 192,
+      "lightLevel": 184,
+      "theme": "techbase",
+      "floorTexture": "FLOOR4_8",
+      "ceilingTexture": "CEIL3_5",
+      "wallTexture": "STARTAN2"
+    }
+  ],
+  "smartObjects": [
+    {
+      "id": "reference_red_door",
+      "name": "reference red door",
+      "type": "door",
+      "x": -1536,
+      "y": -64,
+      "width": 32,
+      "height": 128,
+      "theme": "techbase",
+      "lock": 1,
+      "remoteOnly": true,
+      "wallTexture": "BIGDOOR2"
+    },
+    {
+      "id": "reference_blue_door",
+      "name": "reference blue door",
+      "type": "door",
+      "x": -1184,
+      "y": -64,
+      "width": 32,
+      "height": 128,
+      "theme": "techbase",
+      "lock": 2,
+      "wallTexture": "BIGDOOR2"
+    },
+    {
+      "id": "reference_yellow_door",
+      "name": "reference yellow door",
+      "type": "door",
+      "x": -832,
+      "y": -64,
+      "width": 32,
+      "height": 128,
+      "theme": "techbase",
+      "lock": 3,
+      "wallTexture": "BIGDOOR2"
+    },
+    {
+      "id": "reference_window",
+      "name": "reference window",
+      "type": "window",
+      "x": -512,
+      "y": -96,
+      "width": 192,
+      "height": 32,
+      "theme": "techbase",
+      "floorHeight": 48,
+      "ceilingHeight": 128
+    },
+    {
+      "id": "reference_stairs",
+      "name": "reference stairs",
+      "type": "stairs",
+      "x": -192,
+      "y": -128,
+      "width": 160,
+      "height": 160,
+      "theme": "techbase",
+      "steps": 5,
+      "direction": "E",
+      "startFloor": 0,
+      "endFloor": 64
+    },
+    {
+      "id": "reference_lift",
+      "name": "reference lift",
+      "type": "lift",
+      "x": 128,
+      "y": -128,
+      "width": 96,
+      "height": 96,
+      "theme": "techbase",
+      "lowFloor": 0,
+      "floorHeight": 64
+    },
+    {
+      "id": "reference_pillar",
+      "name": "reference pillar",
+      "type": "pillar",
+      "x": 416,
+      "y": -96,
+      "width": 64,
+      "height": 64,
+      "theme": "techbase",
+      "solid": true,
+      "wallTexture": "SHAWN2"
+    },
+    {
+      "id": "reference_pool",
+      "name": "reference pool",
+      "type": "pool",
+      "x": 704,
+      "y": -128,
+      "width": 160,
+      "height": 160,
+      "theme": "techbase",
+      "hazard": "nukage"
+    },
+    {
+      "id": "reference_3dfloor",
+      "name": "reference 3dfloor",
+      "type": "3dfloor",
+      "x": 1056,
+      "y": -64,
+      "width": 192,
+      "height": 128,
+      "theme": "techbase",
+      "style": "solid",
+      "topZ": 72,
+      "thickness": 8,
+      "topTexture": "STEP2"
+    },
+    {
+      "id": "reference_teleporter",
+      "name": "reference teleporter",
+      "type": "teleporter",
+      "x": 1376,
+      "y": -128,
+      "width": 128,
+      "height": 128,
+      "theme": "techbase"
+    },
+    {
+      "id": "reference_exit",
+      "name": "reference exit",
+      "type": "exit",
+      "x": -1280,
+      "y": 256,
+      "width": 64,
+      "height": 64,
+      "theme": "techbase"
+    },
+    {
+      "id": "reference_switch",
+      "name": "reference switch",
+      "type": "switch",
+      "x": -1088,
+      "y": 256,
+      "width": 48,
+      "height": 48,
+      "theme": "techbase"
+    }
+  ],
+  "links": [
+    {
+      "sourceId": "reference_switch",
+      "targetId": "reference_red_door",
+      "action": "door"
+    }
+  ],
+  "things": [
+    {
+      "id": "reference_player_start",
+      "type": 1,
+      "x": -1600,
+      "y": 480,
+      "angle": 0
+    },
+    {
+      "id": "reference_red_keycard",
+      "type": 13,
+      "x": -1472,
+      "y": 480,
+      "angle": 0
+    },
+    {
+      "id": "reference_blue_keycard",
+      "type": 5,
+      "x": -1120,
+      "y": 480,
+      "angle": 0
+    },
+    {
+      "id": "reference_yellow_keycard",
+      "type": 6,
+      "x": -768,
+      "y": 480,
+      "angle": 0
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+Log started: 2026-10-30 20:00:11
+W_Init: Init WADfiles.
+adding C:/Games/Better Doom Mapper/uzdoom.pk3, 734 lumps
+adding C:/Games/Better Doom Mapper/game_support.pk3, 3310 lumps
+adding ./freedoom-0.13.0/freedoom2.wad, 3610 lumps
+adding C:/Games/Better Doom Mapper/lights.pk3, 7 lumps
+adding C:/Games/Better Doom Mapper/brightmaps.pk3, 500 lumps
+adding C:/Games/Better Doom Mapper/game_widescreen_gfx.pk3, 214 lumps
+adding maps/live_playtest.wad, 4 lumps
+S_Init: Setting up sound.
+I_InitSound: Initializing OpenAL
+  Opened device OpenAL Soft on Speaker (Realtek(R) Audio)
+  EFX enabled
+I_Init: Setting up machine state.
+CPU speed: 1996 MHz
+CPU Vendor ID: AuthenticAMD
+  Name: AMD Ryzen 5 7530U with Radeon Graphics 
+  Family 25 (25), Model 80, Stepping 0
+  Features: SSE2 SSE3 SSSE3 SSE4.1 SSE4.2 AVX AVX2 F16C FMA3 BMI1 BMI2 HyperThreading
+Selecting Vulkan backend...
+ST_Init: Init startup screen.
+Checking cmd-line parameters...
+S_InitData: Load sound definitions.
+G_ParseMapInfo: Load map definitions.
+Texman.Init: Init texture manager.
+ParseTeamInfo: Load team definitions.
+LoadActors: Load actor definitions.

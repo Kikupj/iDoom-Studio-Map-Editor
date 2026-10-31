@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "lastProject": "mcp_integration_test",
+  "recentProjects": [
+    "mcp_integration_test"
+  ],
+  "identities": {
+    "mcp_integration_test": {
+      "id": "2fb9dcf8-5f71-4785-9b83-07d5155c38d1",
+      "updatedAt": "2026-10-31T04:01:05.694Z"
+    }
+  },
+  "sessionRevisions": {
+    "7799de63-e91c-4f90-8054-46a89c1939a8": 0,
+    "2f0bf197-807d-4888-920f-62df229c68ea": 4,
+    "2fb9dcf8-5f71-4785-9b83-07d5155c38d1": 4
+  },
+  "namedSavedRevisions": {
+    "2fb9dcf8-5f71-4785-9b83-07d5155c38d1": 4
+  },
+  "activeProjectId": "2fb9dcf8-5f71-4785-9b83-07d5155c38d1"
+}

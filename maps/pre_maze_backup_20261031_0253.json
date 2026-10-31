@@ -1,0 +1,32 @@
+{
+  "id": "blank_studio",
+  "name": "Clean Starter Room",
+  "description": "Single clean 384×384 starter space with a Player 1 Start ready for sketching.",
+  "rooms": [
+    {
+      "id": "room_1",
+      "name": "Main Space",
+      "shape": "rect",
+      "x": -192,
+      "y": -192,
+      "width": 384,
+      "height": 384,
+      "floorHeight": 0,
+      "ceilingHeight": 128,
+      "lightLevel": 176,
+      "theme": "techbase"
+    }
+  ],
+  "smartObjects": [],
+  "links": [],
+  "things": [
+    {
+      "id": "th_start",
+      "type": 1,
+      "x": 0,
+      "y": 0,
+      "angle": 0
+    }
+  ],
+  "schemaVersion": 1
+}
