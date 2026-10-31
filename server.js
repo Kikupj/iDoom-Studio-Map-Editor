@@ -3,8 +3,8 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { spawn } = require('child_process');
-const { WadReader } = require('./src/wad-reader');
-const { MATERIAL_THEMES, SKYBOX_PRESETS, compileProject, buildUdmfWadBuffer } = require('./src/udmf-compiler');
+const { MATERIAL_THEMES, SKYBOX_PRESETS, DEFAULTS, compileProject, buildUdmfWadBuffer } = require('./src/udmf-compiler');
+const { loadProfile, applyProfile, createResources, describeProfile } = require('./src/game-profile');
 const { THING_CATALOG, STARTER_MAPS } = require('./src/starter-maps');
 const { generateRoomAttachment } = require('./src/smart-generator');
 const { clone, createProjectSession, validateProject } = require('./src/project-session');
@@ -18,9 +18,11 @@ const HOST = process.env.HOST || '127.0.0.1';
 const ROOT_DIR = __dirname;
 const PUBLIC_DIR = path.join(ROOT_DIR, 'public');
 const MAPS_DIR = process.env.IDOOM_MAPS_DIR ? path.resolve(process.env.IDOOM_MAPS_DIR) : path.join(ROOT_DIR, 'maps');
-const IWAD_PATH = path.join(ROOT_DIR, 'freedoom-0.13.0', 'freedoom2.wad');
-const UZDOOM_PATH = path.join(ROOT_DIR, 'uzdoom.exe');
 const AGENT_TOKEN_PATH = path.join(MAPS_DIR, '.agent-token');
+// the game profile: which mod the editor builds for (New Bricks City by default; src/game-profile.js)
+const profile = loadProfile({ rootDir: ROOT_DIR });
+const IWAD_PATH = profile.iwadPath;
+const UZDOOM_PATH = profile.enginePath ? path.resolve(ROOT_DIR, profile.enginePath) : path.join(ROOT_DIR, process.platform === 'win32' ? 'uzdoom.exe' : 'uzdoom');
 
 if (!fs.existsSync(MAPS_DIR)) {
   fs.mkdirSync(MAPS_DIR, { recursive: true });
@@ -32,10 +34,16 @@ if (!/^[0-9a-f]{64}$/i.test(agentToken)) {
   fs.writeFileSync(AGENT_TOKEN_PATH, agentToken, { mode: 0o600 });
 }
 
-console.log('[iDoom Studio] Loading Freedoom2 IWAD textures, flats, and sprites...');
-const wadReader = new WadReader(IWAD_PATH);
+console.log(`[iDoom Studio] Profile: ${profile.name}. Loading textures, flats and sprites...`);
+if (profile.id !== 'freedoom' && !profile.modDir) {
+  console.warn(`[iDoom Studio] The ${profile.name} mod folder was not found. Set IDOOM_MOD_DIR or "modDir" in studio.config.json. Looked in:\n  ${profile.modDirSearched.join('\n  ')}`);
+}
+const wadReader = createResources(profile);
 const wadCatalog = wadReader.getCatalog();
-console.log(`[iDoom Studio] Loaded ${wadCatalog.textures.length} textures and ${wadCatalog.flats.length} flats from freedoom2.wad.`);
+const applied = applyProfile(profile, wadReader);
+for (const warning of applied.warnings) console.warn(`[iDoom Studio] Profile: ${warning}`);
+const profileInfo = describeProfile(profile, wadCatalog);
+console.log(`[iDoom Studio] Loaded ${wadCatalog.textures.length} textures and ${wadCatalog.flats.length} flats${profile.modDir ? ` (mod: ${profile.modDir}, ${applied.modThings} map things)` : ''}.`);
 
 const projectStorage = createProjectStorage({ mapsDir: MAPS_DIR });
 const startupRecovery = projectStorage.getStartupRecovery();
@@ -44,7 +52,7 @@ const startupProjectErrors = startupNamedCandidate ? validateProject(clone(start
 const startupNamed = startupProjectErrors.length ? null : startupNamedCandidate;
 const activeProjectId = !startupRecovery.named ? projectStorage.getActiveProjectId() : null;
 const initialProjectId = startupNamed?.projectId || activeProjectId || crypto.randomUUID();
-const initialProject = clone(startupNamed?.project || STARTER_MAPS.uac_outpost);
+const initialProject = clone(startupNamed?.project || STARTER_MAPS[profile.defaults?.starterMap] || STARTER_MAPS.uac_outpost);
 const initialRevision = Math.max(
   projectStorage.getSessionRevision(initialProjectId),
   projectStorage.getNamedSavedRevision(initialProjectId) || 0,
@@ -55,21 +63,43 @@ projectStorage.rememberActiveProjectId(initialProjectId);
 projectStorage.saveSessionRevision(initialProjectId, initialRevision);
 const projectSession = createProjectSession(initialProject, { wadCatalog, projectId: initialProjectId, revision: initialRevision });
 const playtestWadPath = path.join(MAPS_DIR, 'live_playtest.wad');
+// The engine with the IWAD, the mod folder (if the profile has one) and the playtest map, on the map's own lump
+function playtestArgs(options = {}) {
+  const args = ['-iwad', IWAD_PATH, '-file'];
+  if (profile.modDir) args.push(profile.modDir);
+  args.push(playtestWadPath, '+map', options.mapLump || DEFAULTS.mapLump);
+  if (options.skill) args.push('-skill', String(options.skill));
+  if (options.nomonsters) args.push('-nomonsters');
+  return args;
+}
 const launchPlaytest = options => {
-  if (!fs.existsSync(UZDOOM_PATH)) throw new Error('uzdoom.exe not found in workspace root.');
-  const psArgs = ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', 'src/focus-uzdoom.ps1', '-WadRelPath', 'maps/live_playtest.wad'];
-  if (options?.skill) psArgs.push('-Skill', String(options.skill));
-  if (options?.nomonsters) psArgs.push('-NoMonsters');
-  const child = spawn('powershell.exe', psArgs, { cwd: ROOT_DIR, windowsHide: true });
-  child.on('error', err => console.error('[UZDoom Playtest Error]', err));
-  child.unref();
+  if (!fs.existsSync(UZDOOM_PATH)) throw new Error(`UZDoom not found at ${UZDOOM_PATH} (set "engine" in studio.config.json or IDOOM_ENGINE).`);
+  const args = playtestArgs(options);
+  const command = [UZDOOM_PATH, ...args].map(arg => /\s/.test(arg) ? `"${arg}"` : arg).join(' ');
+  if (process.platform === 'win32') {
+    // the focus script brings the game window to the front on Windows
+    const psArgs = ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', 'src/focus-uzdoom.ps1', '-EnginePath', UZDOOM_PATH,
+      '-IwadPath', IWAD_PATH, '-WadRelPath', 'maps/live_playtest.wad', '-MapLump', options?.mapLump || DEFAULTS.mapLump];
+    if (profile.modDir) psArgs.push('-ModDir', profile.modDir);
+    if (options?.skill) psArgs.push('-Skill', String(options.skill));
+    if (options?.nomonsters) psArgs.push('-NoMonsters');
+    const child = spawn('powershell.exe', psArgs, { cwd: ROOT_DIR, windowsHide: true });
+    child.on('error', err => console.error('[UZDoom Playtest Error]', err));
+    child.unref();
+  } else {
+    const child = spawn(UZDOOM_PATH, args, { cwd: ROOT_DIR, detached: true, stdio: 'ignore' });
+    child.on('error', err => console.error('[UZDoom Playtest Error]', err));
+    child.unref();
+  }
+  return { command };
 };
 const projectPipeline = makeProjectPipeline({
   storage: projectStorage,
   mapsDir: MAPS_DIR,
   wadPath: playtestWadPath,
   wadCatalog,
-  launchPlaytest
+  launchPlaytest,
+  profile
 });
 const agentApi = makeAgentApi({
   session: projectSession,
@@ -82,7 +112,8 @@ const agentApi = makeAgentApi({
   wadPath: playtestWadPath,
   launchPlaytest,
   storage: projectStorage,
-  pipeline: projectPipeline
+  pipeline: projectPipeline,
+  profile: profileInfo
 });
 
 const autosaveTimers = new Map();
@@ -320,7 +351,7 @@ const server = http.createServer(async (req, res) => {
         const error = Object.assign(new Error(`Project revision conflict: current revision is ${current.revision}.`), { statusCode: 409, currentRevision: current.revision });
         throw error;
       }
-      const template = STARTER_MAPS[body.template] || STARTER_MAPS.blank_studio;
+      const template = STARTER_MAPS[body.template] || STARTER_MAPS[profile.defaults?.starterMap] || STARTER_MAPS.blank_studio;
       const project = clone(template);
       if (body.name) project.name = String(body.name).slice(0, 120);
       projectSession.setProjectIdentity(crypto.randomUUID());
@@ -407,6 +438,9 @@ const server = http.createServer(async (req, res) => {
         doorLocks: DOOR_LOCKS,
         starterMaps: STARTER_MAPS,
         wad: wadCatalog,
+        profile: profileInfo,
+        defaultTheme: DEFAULTS.theme,
+        defaultSkybox: DEFAULTS.skybox,
         engine: {
           hasUzdoom: fs.existsSync(UZDOOM_PATH),
           hasFreedoom: fs.existsSync(IWAD_PATH)
@@ -447,10 +481,7 @@ const server = http.createServer(async (req, res) => {
         throw Object.assign(new Error(`Project revision conflict: current revision is ${current.revision}.`), { statusCode: 409, currentRevision: current.revision });
       }
       const played = await projectPipeline.playtest(Number.isInteger(body.revision) ? current.project : (body.project || current.project), body);
-      return sendJson(res, 200, {
-        ...played,
-        command: `uzdoom.exe -iwad freedoom-0.13.0/freedoom2.wad -file maps/live_playtest.wad +map MAP01`
-      });
+      return sendJson(res, 200, played);
     }
 
     // 6. Export WAD File Endpoint
@@ -468,6 +499,8 @@ const server = http.createServer(async (req, res) => {
         'Content-Type': 'application/octet-stream',
         'Content-Disposition': `attachment; filename="${safeName}.wad"`,
         'X-Saved-Path': exported.filePath,
+        ...(exported.modPath ? { 'X-Mod-Path': exported.modPath } : {}),
+        ...(exported.mapinfo ? { 'X-Mapinfo': encodeURIComponent(exported.mapinfo) } : {}),
         'X-Map-Check': JSON.stringify(exported.diagnostics.summary)
       });
       return res.end(exported.buffer);

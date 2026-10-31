@@ -1,5 +1,9 @@
 param(
   [string]$WadRelPath = "maps/live_playtest.wad",
+  [string]$EnginePath = "",
+  [string]$IwadPath = "freedoom-0.13.0/freedoom2.wad",
+  [string]$ModDir = "",
+  [string]$MapLump = "MAP01",
   [string]$Skill = "",
   [switch]$NoMonsters
 )
@@ -14,8 +18,12 @@ try {
   Stop-Process -Name "uzdoom" -Force -ErrorAction SilentlyContinue
   Start-Sleep -Milliseconds 150
 
-  $uzExe = Join-Path $RootDir "uzdoom.exe"
-  $argList = @("-iwad", "freedoom-0.13.0/freedoom2.wad", "-file", $WadRelPath, "+map", "MAP01")
+  $uzExe = if ($EnginePath -ne "") { $EnginePath } else { Join-Path $RootDir "uzdoom.exe" }
+  # the mod folder (a game profile's, e.g. New Bricks City's nbc) loads before the map
+  $files = @()
+  if ($ModDir -ne "") { $files += "`"$ModDir`"" }
+  $files += $WadRelPath
+  $argList = @("-iwad", "`"$IwadPath`"", "-file") + $files + @("+map", $MapLump)
   if ($Skill -ne "") {
     $argList += @("-skill", $Skill)
   }
@@ -48,7 +56,7 @@ public class WinFocus {
     }
     $hwnd = $proc.MainWindowHandle
     $title = $proc.MainWindowTitle
-    if ($hwnd -and $hwnd -ne [IntPtr]::Zero -and $title -like "*Freedoom*") {
+    if ($hwnd -and $hwnd -ne [IntPtr]::Zero -and $title -ne "") {
       if (-not $focused) {
         "Focusing HWND=$hwnd Title=$title" | Out-File -FilePath $logFile -Append -Encoding utf8
         [WinFocus]::keybd_event(0x12, 0, 0, [UIntPtr]::Zero)

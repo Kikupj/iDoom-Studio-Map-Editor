@@ -1,0 +1,6 @@
+{
+  "profile": "new-bricks-city",
+  "modDir": "../New-Bricks-City/nbc",
+  "engine": "uzdoom.exe",
+  "iwad": "freedoom-0.13.0/freedoom2.wad"
+}

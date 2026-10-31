@@ -5,8 +5,24 @@ const { clone, validateProject } = require('./project-session');
 const { analyzeMap, validatePlayableProject } = require('./map-check');
 const { safeProjectName, writeAtomically } = require('./project-storage');
 
-function makeProjectPipeline({ storage, mapsDir, wadPath, wadCatalog, launchPlaytest }) {
+// profile (optional, src/game-profile.js): with map.writeZMapInfo false the WAD carries no ZMAPINFO (the mod's own
+// MAPINFO defines its maps), and with map.exportToMod an export also lands in the mod's maps folder as <LUMP>.wad
+// when the project's map lump matches map.lumpPattern.
+function makeProjectPipeline({ storage, mapsDir, wadPath, wadCatalog, launchPlaytest, profile = null }) {
     if (!storage) throw new Error('A project storage service is required.');
+    const mapSettings = profile?.map || {};
+
+    function wadBuffer(compiled) {
+        const zmapinfo = mapSettings.writeZMapInfo === false ? '' : compiled.zmapinfo;
+        return buildUdmfWadBuffer(compiled.textmap, compiled.mapLump || 'MAP01', zmapinfo);
+    }
+
+    // the mod's maps folder, for a lump the profile accepts there
+    function modExportPath(lump) {
+        if (!mapSettings.exportToMod || !profile?.modDir) return null;
+        if (mapSettings.lumpPattern && !new RegExp(mapSettings.lumpPattern).test(lump)) return null;
+        return path.join(profile.modDir, mapSettings.exportSubdir || 'maps', `${lump}.wad`);
+    }
 
     function validateDraft(project) {
         return validateProject(clone(project || {}), { requireRoom: false, wadCatalog });
@@ -44,7 +60,7 @@ function makeProjectPipeline({ storage, mapsDir, wadPath, wadCatalog, launchPlay
         if ((project.rooms || []).length > 0) {
             try {
                 const compiled = compileProject(project);
-                writeAtomically(path.join(mapsDir, `${saved.name}.wad`), buildUdmfWadBuffer(compiled.textmap, 'MAP01', compiled.zmapinfo));
+                writeAtomically(path.join(mapsDir, `${saved.name}.wad`), wadBuffer(compiled));
                 stats = compiled.stats;
             } catch (error) {
                 // A JSON draft remains saved even if it is not yet compilable as playable geometry.
@@ -58,10 +74,19 @@ function makeProjectPipeline({ storage, mapsDir, wadPath, wadCatalog, launchPlay
     function exportWad(project, name) {
         const { compiled, diagnostics } = compilePlayable(project);
         const safeName = safeProjectName(name || project.name, 'custom_map');
-        const buffer = buildUdmfWadBuffer(compiled.textmap, 'MAP01', compiled.zmapinfo);
+        const buffer = wadBuffer(compiled);
         const filePath = path.join(mapsDir, `${safeName}.wad`);
         writeAtomically(filePath, buffer);
-        return { buffer, filePath, wadPath: `maps/${safeName}.wad`, stats: compiled.stats, diagnostics };
+        const result = { buffer, filePath, wadPath: `maps/${safeName}.wad`, mapLump: compiled.mapLump, stats: compiled.stats, diagnostics };
+        const modPath = modExportPath(compiled.mapLump);
+        if (modPath) {
+            fs.mkdirSync(path.dirname(modPath), { recursive: true });
+            writeAtomically(modPath, buffer);
+            result.modPath = modPath;
+            // the mod's MAPINFO needs an entry for a new map (the WAD has no ZMAPINFO of its own)
+            if (mapSettings.writeZMapInfo === false) result.mapinfo = compiled.mapinfo;
+        }
+        return result;
     }
 
     async function playtest(project, options = {}) {
@@ -75,11 +100,11 @@ function makeProjectPipeline({ storage, mapsDir, wadPath, wadCatalog, launchPlay
             });
         }
         const { compiled, diagnostics } = compilePlayable(playProject);
-        const buffer = buildUdmfWadBuffer(compiled.textmap, 'MAP01', compiled.zmapinfo);
+        const buffer = wadBuffer(compiled);
         writeAtomically(wadPath, buffer);
         if (typeof launchPlaytest !== 'function') throw new Error('Playtest is not available on this host.');
-        await launchPlaytest(options);
-        return { ok: true, launched: true, wadPath: 'maps/live_playtest.wad', stats: compiled.stats, diagnostics };
+        const launch = await launchPlaytest({ ...options, mapLump: compiled.mapLump });
+        return { ok: true, launched: true, wadPath: 'maps/live_playtest.wad', mapLump: compiled.mapLump, command: launch?.command, stats: compiled.stats, diagnostics };
     }
 
     return { check, validateDraft, saveNamed, exportWad, playtest, compilePlayable };

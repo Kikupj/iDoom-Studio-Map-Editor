@@ -5,7 +5,6 @@ const path = require('path');
 const { McpServer } = require('@modelcontextprotocol/sdk/server/mcp.js');
 const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio.js');
 const { z } = require('zod');
-const { STARTER_MAPS } = require('./starter-maps');
 
 const ROOT_DIR = path.resolve(__dirname, '..');
 const MAPS_DIR = process.env.IDOOM_MAPS_DIR ? path.resolve(process.env.IDOOM_MAPS_DIR) : path.join(ROOT_DIR, 'maps');
@@ -69,15 +68,15 @@ async function startMcpServer() {
     }
 
     register('idoom_get_project', 'Read the live map and its revision before editing. Returns the complete rooms, objects, links, things, validation findings, and non-blocking missing-keycard warnings.', {}, 'project_get', () => ({}));
-    register('idoom_get_catalog', 'List starter maps, themes, skyboxes, Doom thing types, and the unlocked/red/blue/yellow door lock values with matching pickup types.', {}, 'catalog_get', () => ({}));
+    register('idoom_get_catalog', 'List the game profile (mod, scale, map naming), starter maps, material themes, skyboxes, map thing types (including the mod\'s own), textures and flats with their source groups, and the door lock values with matching pickup types.', {}, 'catalog_get', () => ({}));
     register('idoom_create_project', 'Replace the live map with a named starter project. The update is pushed to the open editor immediately.', {
         revision: rev,
-        template: z.enum(Object.keys(STARTER_MAPS)).default('blank_studio'),
+        template: z.string().max(64).default('blank_studio').describe('A starter map id from idoom_get_catalog (the game profile adds its own, e.g. nbc_block).'),
         name: z.string().max(120).optional()
     }, 'project_create');
     register('idoom_attach_room', 'Attach a collision-checked themed room, door/stairs connection, and optional encounter to the current map.', {
         revision: rev,
-        theme: z.enum(['techbase', 'industrial', 'bunker', 'hell', 'outdoor', 'toxic']).default('techbase'),
+        theme: z.string().max(64).optional().describe('A material theme id from idoom_get_catalog; the profile default when omitted.'),
         connection: z.enum(['door', 'stairs']).default('door'),
         shape: z.enum(['rect', 'octagon']).default('rect'),
         encounter: z.enum(['none', 'light', 'balanced', 'ambush']).default('none'),
@@ -86,6 +85,12 @@ async function startMcpServer() {
         width: z.number().positive().max(2048).optional(),
         height: z.number().positive().max(2048).optional()
     }, 'room_attach');
+    register('idoom_set_project_settings', 'Set project-level fields: the map name, the skybox preset, and the map lump the WAD and playtest use (e.g. NBC_HUB; up to 8 letters, digits and underscores). Pass an empty string to clear a field.', {
+        revision: rev,
+        name: z.string().max(120).optional(),
+        skybox: z.string().max(64).optional(),
+        mapLump: z.string().max(8).optional()
+    }, 'project_settings');
     register('idoom_add_object', 'Add a room, smart object, or Doom thing using its normal editor project fields. The id may be omitted and generated automatically.', {
         revision: rev,
         collection: z.enum(['room', 'smartObject', 'thing']),
@@ -131,7 +136,7 @@ async function startMcpServer() {
         revision: rev,
         name: z.string().min(1).max(64).regex(/^[a-zA-Z0-9_-]+$/)
     }, 'project_load');
-    register('idoom_export_wad', 'Compile and write the current validated project as maps/<name>.wad.', {
+    register('idoom_export_wad', 'Compile and write the current validated project as maps/<name>.wad. Under a game profile that exports to its mod, a map lump the profile accepts (NBC_* for New Bricks City) is also written to the mod as <LUMP>.wad, and the result carries the MAPINFO entry the mod needs for a new map.', {
         revision: rev,
         name: z.string().max(120).optional()
     }, 'project_export');

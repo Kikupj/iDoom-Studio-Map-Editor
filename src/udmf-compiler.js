@@ -145,8 +145,18 @@ const SKYBOX_PRESETS = {
   }
 };
 
+// What a room, object or project without its own theme or sky falls back to. A game profile (src/game-profile.js)
+// changes these, and adds its own themes and skies to the tables above.
+const DEFAULTS = { theme: 'techbase', skybox: 'sky1', mapLump: 'MAP01', roomCeiling: 128, roomLight: 176, wingCeiling: 160, encounter: null, minDoorWidth: 56 };
+
 function getTheme(themeId) {
-  return MATERIAL_THEMES[themeId] || MATERIAL_THEMES.techbase;
+  return MATERIAL_THEMES[themeId] || MATERIAL_THEMES[DEFAULTS.theme] || MATERIAL_THEMES.techbase;
+}
+
+// A map lump name the engine accepts: up to 8 letters, digits and underscores, upper-case.
+function mapLumpOf(project) {
+  const lump = String(project?.mapLump || '').toUpperCase();
+  return /^[A-Z0-9_]{1,8}$/.test(lump) ? lump : DEFAULTS.mapLump;
 }
 
 // Convert a shape definition into polygon vertices [{x, y}] in counter-clockwise order
@@ -427,7 +437,7 @@ function expandProjectToFootprints(project) {
   }
 
   rooms.forEach((room, idx) => {
-    const theme = getTheme(room.theme || 'techbase');
+    const theme = getTheme(room.theme || DEFAULTS.theme);
     const poly = ensureCCW(shapeToPolygon(room));
     const tag = room.tag || objectTagMap.get(room.id) || 0;
     const baseFloor = Number.isFinite(room.floorHeight) ? room.floorHeight : 0;
@@ -521,7 +531,7 @@ function expandProjectToFootprints(project) {
   }
 
   smartObjects.forEach((obj, idx) => {
-    const theme = getTheme(obj.theme || 'techbase');
+    const theme = getTheme(obj.theme || DEFAULTS.theme);
     const poly = ensureCCW(shapeToPolygon(obj));
     const adj = getAdjacentRoomHeights(poly);
     const linkedTag = obj.tag || objectTagMap.get(obj.id) || 0;
@@ -869,7 +879,7 @@ function extractElementaryFaces(vertices, edgeSet) {
 function compileProject(project) {
   let { footprints, threeDVolumes, nextAutoTag } = expandProjectToFootprints(project);
 
-  const skyboxConfig = SKYBOX_PRESETS[project.skybox || 'sky1'] || SKYBOX_PRESETS.sky1;
+  const skyboxConfig = SKYBOX_PRESETS[project.skybox || DEFAULTS.skybox] || SKYBOX_PRESETS[DEFAULTS.skybox] || SKYBOX_PRESETS.sky1;
 
   if (footprints.length === 0) {
     return {
@@ -1649,17 +1659,27 @@ function compileProject(project) {
 
   // 7. Generate ZMAPINFO lump for Skybox texture, scroll speed & level title
   const safeTitle = (project.name || 'iDoom Studio Map').replace(/"/g, '');
+  const mapLump = mapLumpOf(project);
   const zmapinfo = [
-    `map MAP01 "${safeTitle}"`,
+    `map ${mapLump} "${safeTitle}"`,
     '{',
     `  sky1 = "${skyboxConfig.texture}", ${skyboxConfig.scrollSpeed || 0}`,
     '  evenlighting',
+    '}'
+  ].join('\n');
+  // the same entry for a mod's own MAPINFO, when the map is exported into the mod without a ZMAPINFO of its own
+  const mapinfo = [
+    `map ${mapLump} "${safeTitle}"`,
+    '{',
+    `\tsky1 = "${skyboxConfig.texture}", ${skyboxConfig.scrollSpeed || 0}`,
     '}'
   ].join('\n');
 
   return {
     textmap: lines.join('\n'),
     zmapinfo,
+    mapinfo,
+    mapLump,
     skybox: skyboxConfig,
     vertices: previewVertices,
     linedefs: previewLinedefs,
@@ -1723,6 +1743,8 @@ function buildUdmfWadBuffer(textmapString, mapName = 'MAP01', zmapinfoString = '
 module.exports = {
   MATERIAL_THEMES,
   SKYBOX_PRESETS,
+  DEFAULTS,
+  mapLumpOf,
   compileProject,
   buildUdmfWadBuffer
 };

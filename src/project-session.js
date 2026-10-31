@@ -5,9 +5,11 @@ const { getDoorLockInfo } = require('./door-keys');
 
 const COLLECTIONS = ['rooms', 'smartObjects', 'things'];
 const PROJECT_SCHEMA_VERSION = 1;
-const THEME_IDS = new Set(Object.keys(MATERIAL_THEMES));
-const SKYBOX_IDS = new Set(Object.keys(SKYBOX_PRESETS));
-const THING_TYPES = new Set(THING_CATALOG.map(thing => thing.type));
+// Looked up when a project is validated, not when this module loads: a game profile (src/game-profile.js) adds
+// its own themes, skies and things to these tables after startup.
+const THEME_IDS = { has: id => Object.prototype.hasOwnProperty.call(MATERIAL_THEMES, id) };
+const SKYBOX_IDS = { has: id => Object.prototype.hasOwnProperty.call(SKYBOX_PRESETS, id) };
+const THING_TYPES = { has: type => THING_CATALOG.some(thing => thing.type === type) };
 const TEXTURE_FIELDS = ['wallTexture', 'trackTexture', 'topTexture', 'bottomTexture', 'edgeTexture', 'midTexture', 'upperTexture', 'lowerTexture'];
 const FLAT_FIELDS = ['floorTexture', 'ceilingTexture'];
 const VALID_OBJECT_TYPES = new Set([
@@ -52,6 +54,9 @@ function validateProject(input, { requireRoom = true, wadCatalog } = {}) {
     if (project.schemaVersion !== PROJECT_SCHEMA_VERSION) errors.push(`schemaVersion must be ${PROJECT_SCHEMA_VERSION}; received "${project.schemaVersion}".`);
     if (project.theme && !THEME_IDS.has(project.theme)) errors.push(`Unknown project theme "${project.theme}".`);
     if (project.skybox && !SKYBOX_IDS.has(project.skybox)) errors.push(`Unknown skybox preset "${project.skybox}".`);
+    if (project.mapLump !== undefined && (typeof project.mapLump !== 'string' || !/^[A-Za-z0-9_]{1,8}$/.test(project.mapLump))) {
+        errors.push('mapLump must be a map lump name of 1 to 8 letters, digits or underscores (e.g. NBC_HUB).');
+    }
     if (requireRoom && project.rooms.length === 0) errors.push('Add at least one room before compiling or saving a playable map.');
 
     const ids = new Set();
@@ -123,13 +128,13 @@ function validateProject(input, { requireRoom = true, wadCatalog } = {}) {
                     const materialName = typeof item[field] === 'string' ? item[field].toUpperCase() : '';
                     const materialExists = textureNames.has(materialName) || flatNames.has(materialName) || materialName === 'F_SKY1';
                     if (!materialExists) {
-                        errors.push(`${label}.${field} "${item[field]}" is not a Freedoom2 texture or flat.`);
+                        errors.push(`${label}.${field} "${item[field]}" is not a loaded texture or flat.`);
                     }
                 }
                 for (const field of FLAT_FIELDS) {
                     if (item[field] === undefined || item[field] === '-' || item[field] === '') continue;
                     if (typeof item[field] !== 'string' || (!flatNames.has(item[field].toUpperCase()) && item[field].toUpperCase() !== 'F_SKY1')) {
-                        errors.push(`${label}.${field} "${item[field]}" is not a Freedoom2 flat.`);
+                        errors.push(`${label}.${field} "${item[field]}" is not a loaded flat.`);
                     }
                 }
             }

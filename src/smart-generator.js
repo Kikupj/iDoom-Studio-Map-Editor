@@ -4,10 +4,10 @@
  */
 
 const crypto = require('crypto');
-const { MATERIAL_THEMES } = require('./udmf-compiler');
+const { MATERIAL_THEMES, DEFAULTS } = require('./udmf-compiler');
 
 function generateRoomAttachment(project, options = {}) {
-  const style = options.theme || 'techbase';
+  const style = options.theme || DEFAULTS.theme;
   const encounter = options.encounter || 'balanced'; // 'none', 'light', 'balanced', 'ambush'
   const connectionType = options.connection || 'door'; // 'door', 'stairs', 'window_lift'
   const targetRoomId = options.fromRoomId;
@@ -29,7 +29,7 @@ function generateRoomAttachment(project, options = {}) {
     anchor = rooms.reduce((best, r) => ((r.x + (r.width || 256)) > (best.x + (best.width || 256)) ? r : best), rooms[0]);
   }
   if (!anchor) {
-    anchor = { id: 'room_base', x: -192, y: -192, width: 384, height: 384, floorHeight: 0, ceilingHeight: 128, lightLevel: 176, theme: 'techbase' };
+    anchor = { id: 'room_base', x: -192, y: -192, width: 384, height: 384, floorHeight: 0, ceilingHeight: DEFAULTS.roomCeiling, lightLevel: DEFAULTS.roomLight, theme: DEFAULTS.theme };
     rooms.push(anchor);
   }
 
@@ -115,7 +115,8 @@ function generateRoomAttachment(project, options = {}) {
 
   const stamp = crypto.randomUUID().replace(/-/g, '').slice(0, 12);
   const newFloor = connectionType === 'stairs' ? aFloor + 64 : aFloor;
-  const newCeil = newFloor + (style === 'outdoor' || style === 'hell' ? 224 : 160);
+  const openSky = style === 'outdoor' || style === 'hell' || (MATERIAL_THEMES[style] || {}).ceiling === 'F_SKY1';
+  const newCeil = newFloor + (openSky ? 224 : (DEFAULTS.wingCeiling || 160));
 
   const newRoom = {
     id: `room_${stamp}`,
@@ -191,7 +192,7 @@ function generateRoomAttachment(project, options = {}) {
         y: midY + 48,
         width: 48,
         height: 48,
-        wallTexture: 'SHAWN2'
+        wallTexture: (MATERIAL_THEMES[style] || {}).support || 'SHAWN2'
       },
       {
         id: `pil_${stamp}_2`,
@@ -202,15 +203,17 @@ function generateRoomAttachment(project, options = {}) {
         y: midY - 96,
         width: 48,
         height: 48,
-        wallTexture: 'SHAWN2'
+        wallTexture: (MATERIAL_THEMES[style] || {}).support || 'SHAWN2'
       }
     );
   }
 
   // Add combat encounter & pickups
   if (encounter !== 'none') {
-    const monsterType = style === 'hell' ? 3001 : 9; // Imp or Shotgun Sergeant
-    const heavyType = style === 'hell' ? 69 : 3001; // Hell Knight or Imp
+    // the game profile's encounter things (DEFAULTS.encounter), else Doom's
+    const enc = DEFAULTS.encounter || {};
+    const monsterType = enc.monster || (style === 'hell' ? 3001 : 9); // Imp or Shotgun Sergeant
+    const heavyType = enc.heavy || (style === 'hell' ? 69 : 3001); // Hell Knight or Imp
 
     things.push(
       {
@@ -230,14 +233,14 @@ function generateRoomAttachment(project, options = {}) {
       },
       {
         id: `th_${stamp}_item`,
-        type: 2012, // Medikit
+        type: enc.health || 2012, // Medikit
         x: midX,
         y: chosen.ry + 48,
         angle: 0
       },
       {
         id: `th_${stamp}_ammo`,
-        type: 2008, // Shells
+        type: enc.ammo || 2008, // Shells
         x: midX,
         y: chosen.ry + h - 48,
         angle: 0

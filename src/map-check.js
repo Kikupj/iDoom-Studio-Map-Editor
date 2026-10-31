@@ -2,7 +2,10 @@ const { clone, validateProject } = require('./project-session');
 const { THING_CATALOG } = require('./starter-maps');
 const { getDoorKeyWarnings } = require('./door-keys');
 
-const THING_BY_TYPE = new Map(THING_CATALOG.map(thing => [thing.type, thing]));
+const { DEFAULTS } = require('./udmf-compiler');
+
+// Looked up at check time: a game profile adds the mod's things to the catalog after startup.
+const THING_BY_TYPE = { get: type => THING_CATALOG.find(thing => thing.type === type) };
 
 function roomPolygon(room) {
     const x = Number(room.x) || 0;
@@ -114,7 +117,7 @@ function analyzeMap(projectInput, { wadCatalog } = {}) {
         if (adjacentRooms.length < 2) {
             add('warning', 'DOOR_NOT_BETWEEN_ROOMS', 'Door may not connect two rooms', `${door.name || door.id || 'Door'} does not touch two authored room bounds in the static layout.`, 'Check that the door spans the wall opening and verify the connection in UZDoom.', [door.id].filter(Boolean), { x: door.x, y: door.y });
         }
-        if (Math.min(door.width, door.height) < 24 || Math.max(door.width, door.height) < 56) {
+        if (Math.min(door.width, door.height) < 24 || Math.max(door.width, door.height) < (DEFAULTS.minDoorWidth || 56)) {
             add('warning', 'DOOR_OPENING_TOO_SMALL', 'Door opening may be too small', `${door.name || door.id || 'Door'} has a ${door.width}×${door.height} footprint, which may not provide usable player clearance.`, 'Increase the opening dimensions and confirm clearance in UZDoom.', [door.id].filter(Boolean), { x: door.x, y: door.y });
         }
     }

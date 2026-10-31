@@ -76,7 +76,7 @@ function applyBatchOperations(project, operations) {
     return { project, createdIds, createdRoomIds };
 }
 
-function makeAgentApi({ session, starterMaps, themes, skyboxes, things, wadCatalog, mapsDir, wadPath, launchPlaytest, storage, pipeline }) {
+function makeAgentApi({ session, starterMaps, themes, skyboxes, things, wadCatalog, mapsDir, wadPath, launchPlaytest, storage, pipeline, profile = null }) {
     const validate = (project, options = {}) => validateProject(project, { wadCatalog, ...options });
     const projectStorage = storage || createProjectStorage({ mapsDir });
     const projectPipeline = pipeline || makeProjectPipeline({ storage: projectStorage, mapsDir, wadPath, wadCatalog, launchPlaytest });
@@ -120,7 +120,8 @@ function makeAgentApi({ session, starterMaps, themes, skyboxes, things, wadCatal
                 skyboxes,
                 things,
                 doorLocks: DOOR_LOCKS,
-                wad: { textures: wadCatalog?.textures || [], flats: wadCatalog?.flats || [] },
+                profile,
+                wad: { textures: wadCatalog?.textures || [], flats: wadCatalog?.flats || [], groups: wadCatalog?.groups || {} },
                 starterMaps: Object.fromEntries(Object.entries(starterMaps).map(([id, map]) => [id, { id, name: map.name, description: map.description }]))
             };
         }
@@ -151,6 +152,16 @@ function makeAgentApi({ session, starterMaps, themes, skyboxes, things, wadCatal
                 if (args.name) fresh.name = String(args.name).slice(0, 120);
                 session.setProjectIdentity(crypto.randomUUID());
                 result = commit(fresh, args);
+                break;
+            }
+            case 'project_settings': {
+                // project-level fields: the name, the sky, the map lump the WAD and the playtest use
+                for (const field of ['name', 'skybox', 'mapLump']) {
+                    if (args[field] === undefined) continue;
+                    if (args[field] === null || args[field] === '') delete project[field];
+                    else project[field] = field === 'mapLump' ? String(args[field]).toUpperCase() : args[field];
+                }
+                result = commit(project, args);
                 break;
             }
             case 'room_attach': {
@@ -247,7 +258,11 @@ function makeAgentApi({ session, starterMaps, themes, skyboxes, things, wadCatal
             }
             case 'project_export': {
                 const exported = projectPipeline.exportWad(project, args.name || project.name);
-                return { ok: true, revision: current.revision, wadPath: exported.wadPath, stats: exported.stats, diagnostics: exported.diagnostics };
+                return {
+                    ok: true, revision: current.revision, wadPath: exported.wadPath, mapLump: exported.mapLump,
+                    modPath: exported.modPath || null, mapinfo: exported.mapinfo || null,
+                    stats: exported.stats, diagnostics: exported.diagnostics
+                };
             }
             case 'map_playtest': {
                 const played = await projectPipeline.playtest(project);

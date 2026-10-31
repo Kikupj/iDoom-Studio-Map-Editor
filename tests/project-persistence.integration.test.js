@@ -50,7 +50,7 @@ test('server restart reopens named project and offers isolated newer autosave wi
     let child;
     const start = () => spawn(process.execPath, ['server.js'], {
         cwd: ROOT,
-        env: { ...process.env, PORT: String(port), HOST: '127.0.0.1', IDOOM_MAPS_DIR: mapsDir },
+        env: { ...process.env, PORT: String(port), HOST: '127.0.0.1', IDOOM_MAPS_DIR: mapsDir, IDOOM_PROFILE: 'freedoom' },
         stdio: 'ignore'
     });
     t.after(async () => {

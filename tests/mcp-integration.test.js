@@ -37,7 +37,7 @@ test('MCP tools discover, mutate, validate, and live-sync through revisioned loc
     const mapsDir = fs.mkdtempSync(path.join(os.tmpdir(), 'idoom-mcp-server-test-'));
     const serverProcess = spawn(process.execPath, ['server.js'], {
         cwd: ROOT,
-        env: { ...process.env, PORT: String(port), HOST: '127.0.0.1', IDOOM_MAPS_DIR: mapsDir },
+        env: { ...process.env, PORT: String(port), HOST: '127.0.0.1', IDOOM_MAPS_DIR: mapsDir, IDOOM_PROFILE: 'freedoom' },
         stdio: 'ignore'
     });
     let client;

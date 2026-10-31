@@ -1,0 +1,534 @@
+{
+  "id": "new-bricks-city",
+  "name": "New Bricks City",
+  "description": "Maps for the New Bricks City mod (UZDoom): its textures, sprites and map things, read live from the mod folder; Bricks material themes at the mod's scale; maps export as NBC_* lumps into nbc/maps.",
+  "modDirCandidates": [
+    "../New-Bricks-City/nbc",
+    "../New Bricks City/nbc",
+    "../NewBricksCity/nbc",
+    "../New-Bricks-City-main/nbc"
+  ],
+  "iwad": "freedoom-0.13.0/freedoom2.wad",
+  "defaults": {
+    "theme": "nbc_tenement",
+    "skybox": "nbc_dusk",
+    "mapLump": "NBC_MAP",
+    "roomCeiling": 96,
+    "roomLight": 160,
+    "wingCeiling": 96,
+    "starterMap": "nbc_block",
+    "encounter": {
+      "monster": 3004,
+      "heavy": 3004,
+      "health": 2012,
+      "ammo": 2049
+    }
+  },
+  "scale": {
+    "note": "Measured from the mod's actors: a person is 56 units (1.8 m), so a metre is about 31 units up and 37 across (PLAN.md 4.4).",
+    "personHeight": 56,
+    "ceilingFlat": 80,
+    "ceilingLobby": 96,
+    "ceilingShop": 112,
+    "doorHeight": 68,
+    "doorWidth": 48,
+    "corridorWidth": 80,
+    "roadWidth": 256,
+    "sidewalkWidth": 112,
+    "railHeight": 36,
+    "fenceHeight": 64
+  },
+  "map": {
+    "lumpPattern": "^NBC_[A-Z0-9_]{1,4}$",
+    "writeZMapInfo": false,
+    "exportToMod": true,
+    "exportSubdir": "maps"
+  },
+  "textureGroups": [
+    {
+      "id": "nbc",
+      "label": "New Bricks City",
+      "pathPrefix": "textures/nbc/"
+    },
+    {
+      "id": "city",
+      "label": "City (Corpo Wars)",
+      "pathPrefix": "textures/cw/themes/"
+    },
+    {
+      "id": "props",
+      "label": "Props",
+      "pathPrefix": "textures/cw/props/"
+    },
+    {
+      "id": "cw",
+      "label": "Corpo Wars",
+      "pathPrefix": "textures/cw/"
+    },
+    {
+      "id": "hidden",
+      "label": "Tools",
+      "pathPrefix": "textures/obsidian/"
+    },
+    {
+      "id": "freedoom",
+      "label": "Freedoom",
+      "iwad": true
+    }
+  ],
+  "thingCategories": [
+    {
+      "id": "starts",
+      "label": "Starts"
+    },
+    {
+      "id": "gang",
+      "label": "Gang spots"
+    },
+    {
+      "id": "keys",
+      "label": "Keys"
+    },
+    {
+      "id": "bricks",
+      "label": "Bricks",
+      "classPrefix": [
+        "NBC_"
+      ],
+      "color": "#f2a93b"
+    },
+    {
+      "id": "furniture",
+      "label": "Furniture",
+      "classPrefix": [
+        "CW_F",
+        "CW_K"
+      ],
+      "color": "#a78bfa"
+    },
+    {
+      "id": "decor",
+      "label": "Decor",
+      "classPrefix": [
+        "CWD_"
+      ],
+      "color": "#94a3b8"
+    },
+    {
+      "id": "vehicles",
+      "label": "Vehicles",
+      "numberRange": [
+        10600,
+        10899
+      ],
+      "color": "#38bdf8"
+    },
+    {
+      "id": "props",
+      "label": "Props"
+    },
+    {
+      "id": "doom",
+      "label": "Freedoom"
+    },
+    {
+      "id": "weapons-hidden",
+      "classPrefix": [
+        "Colt45"
+      ],
+      "skip": true
+    }
+  ],
+  "baseThings": {
+    "keep": [
+      1,
+      13,
+      5,
+      6,
+      3004,
+      2035,
+      2012,
+      2011,
+      2048,
+      2049
+    ],
+    "rename": {
+      "3004": {
+        "name": "Gang member spot",
+        "category": "gang",
+        "color": "#ef4444",
+        "note": "Any monster spot: a raid clears it and stands one of the holding gang there."
+      },
+      "2035": {
+        "name": "Cooking barrel",
+        "category": "props"
+      },
+      "2012": {
+        "name": "Medkit (loot)",
+        "category": "props"
+      },
+      "2011": {
+        "name": "Stimpack (loot)",
+        "category": "props"
+      },
+      "2048": {
+        "name": "Ammo box (loot)",
+        "category": "props"
+      },
+      "2049": {
+        "name": "Shell box (loot)",
+        "category": "props"
+      }
+    },
+    "otherCategory": "doom"
+  },
+  "themes": {
+    "nbc_tenement": {
+      "name": "Brick Tenement",
+      "subtitle": "Red brick, concrete trim, worn wooden flat doors",
+      "wall": "ADBRICK",
+      "trim": "CWCONCW",
+      "door": "CWDOOR1",
+      "track": "ADMETL1",
+      "step": "AXSTEP23",
+      "support": "CWCONCW",
+      "floor": "AXDU02",
+      "ceiling": "AXF16",
+      "light": 160,
+      "accentColor": "#b5523b"
+    },
+    "nbc_flat": {
+      "name": "Apartment Flat",
+      "subtitle": "Plaster walls, wood floors, a panelled door",
+      "wall": "CWWALL1",
+      "trim": "AXDW06A",
+      "door": "CWDOOR2",
+      "track": "ADMETL1",
+      "step": "AXSTEP23",
+      "support": "AXDW06A",
+      "floor": "AXHF07A",
+      "ceiling": "CWWALL1",
+      "light": 176,
+      "accentColor": "#d6c7a1"
+    },
+    "nbc_stairwell": {
+      "name": "Concrete Stairwell",
+      "subtitle": "Poured concrete, striped steps, a red fire door",
+      "wall": "CWCONCW",
+      "trim": "ADCONC1",
+      "door": "CWFIRED",
+      "track": "ADMETL1",
+      "step": "AXSTEP23",
+      "support": "ADCONC1",
+      "floor": "CWSTAIF",
+      "ceiling": "CWCONCF",
+      "light": 144,
+      "accentColor": "#9ca3af"
+    },
+    "nbc_street": {
+      "name": "Street",
+      "subtitle": "Asphalt under the sky, brick fronts, steel shop doors",
+      "wall": "AXW85",
+      "trim": "CWRETAIN",
+      "door": "CWDOORS",
+      "track": "ADMETL1",
+      "step": "AXSTEP23",
+      "support": "CWCONCW",
+      "floor": "CWASPH",
+      "ceiling": "F_SKY1",
+      "light": 176,
+      "accentColor": "#4b5563"
+    },
+    "nbc_yard": {
+      "name": "Courtyard and Sidewalk",
+      "subtitle": "Paving slabs between brick walls, open sky",
+      "wall": "ADBRICK",
+      "trim": "CWCONCW",
+      "door": "CWDOORS",
+      "track": "ADMETL1",
+      "step": "AXSTEP23",
+      "support": "CWCONCW",
+      "floor": "CWPAVE",
+      "ceiling": "F_SKY1",
+      "light": 184,
+      "accentColor": "#78716c"
+    },
+    "nbc_rooftop": {
+      "name": "Rooftop",
+      "subtitle": "Tar and gravel, concrete parapets, steel stair huts",
+      "wall": "CWCONCW",
+      "trim": "AXW28",
+      "door": "AXW86",
+      "track": "AXW44",
+      "step": "AXSTEP23",
+      "support": "AXW44",
+      "floor": "AXF05",
+      "ceiling": "F_SKY1",
+      "light": 192,
+      "accentColor": "#6b7280"
+    },
+    "nbc_basement": {
+      "name": "Basement",
+      "subtitle": "Pipes, grime, a rusted steel door, low light",
+      "wall": "AXW12",
+      "trim": "AXW23",
+      "door": "AXW86",
+      "track": "ADMETL1",
+      "step": "AXSTEP23",
+      "support": "AXW23",
+      "floor": "AXF02",
+      "ceiling": "AXF05",
+      "light": 112,
+      "accentColor": "#57534e"
+    },
+    "nbc_industrial": {
+      "name": "Warehouse",
+      "subtitle": "Corrugated steel, roll-up shutters, a concrete floor",
+      "wall": "AXW86",
+      "trim": "AXW01",
+      "door": "AXW28",
+      "track": "AXW44",
+      "step": "AXSTEP23",
+      "support": "AXW44",
+      "floor": "AXF02",
+      "ceiling": "AXF16",
+      "light": 144,
+      "accentColor": "#3f5d7a"
+    },
+    "nbc_precinct": {
+      "name": "Precinct",
+      "subtitle": "Grey institutional walls, steel trim, dark tile",
+      "wall": "ADGREYW",
+      "trim": "ADMETL1",
+      "door": "CWDOORS",
+      "track": "ADMETL1",
+      "step": "AXSTEP23",
+      "support": "ADMETL1",
+      "floor": "ADFDARK",
+      "ceiling": "CWTILEF",
+      "light": 176,
+      "accentColor": "#3f7cc4"
+    },
+    "nbc_lobby": {
+      "name": "Tower Lobby",
+      "subtitle": "Marble walls and floor, a glazed double door",
+      "wall": "ADMARBG",
+      "trim": "ADMETL1",
+      "door": "CWDOORWL",
+      "track": "ADMETL1",
+      "step": "AXSTEP23",
+      "support": "ADMETL1",
+      "floor": "ADFMARB",
+      "ceiling": "CWWALL1",
+      "light": 192,
+      "accentColor": "#e5e7eb"
+    },
+    "nbc_subway": {
+      "name": "Subway",
+      "subtitle": "White tile, steel trim, a station door",
+      "wall": "CWTILEW",
+      "trim": "AXW44",
+      "door": "CWDOORS",
+      "track": "ADMETL1",
+      "step": "AXSTEP23",
+      "support": "AXW44",
+      "floor": "CWTILEF",
+      "ceiling": "AXF16",
+      "light": 160,
+      "accentColor": "#f1f5f9"
+    },
+    "nbc_sewer": {
+      "name": "Storm Drain",
+      "subtitle": "Stained concrete, sea-wall blocks, water underfoot",
+      "wall": "CWWALLD",
+      "trim": "CWSEAWAL",
+      "door": "AXW86",
+      "track": "ADMETL1",
+      "step": "AXSTEP23",
+      "support": "CWSEAWAL",
+      "floor": "AXF06B",
+      "ceiling": "CWCONCF",
+      "light": 96,
+      "accentColor": "#1e3a4a"
+    }
+  },
+  "skyboxes": {
+    "nbc_dusk": {
+      "name": "Bricks at dusk (NBCSKYDK)",
+      "texture": "NBCSKYDK",
+      "scrollSpeed": 0,
+      "use3DSkybox": false,
+      "topColor": [
+        0.1,
+        0.08,
+        0.2
+      ],
+      "horizonColor": [
+        0.78,
+        0.4,
+        0.22
+      ]
+    },
+    "nbc_day": {
+      "name": "Bricks by day (NBCSKYDY)",
+      "texture": "NBCSKYDY",
+      "scrollSpeed": 0,
+      "use3DSkybox": false,
+      "topColor": [
+        0.3,
+        0.42,
+        0.62
+      ],
+      "horizonColor": [
+        0.7,
+        0.74,
+        0.8
+      ]
+    },
+    "nbc_morning": {
+      "name": "Bricks in the morning (NBCSKYMR)",
+      "texture": "NBCSKYMR",
+      "scrollSpeed": 0,
+      "use3DSkybox": false,
+      "topColor": [
+        0.36,
+        0.44,
+        0.6
+      ],
+      "horizonColor": [
+        0.86,
+        0.72,
+        0.58
+      ]
+    }
+  },
+  "starterMaps": {
+    "nbc_block": {
+      "name": "Bricks: Street and Tenement",
+      "description": "A street under the sky, a brick tenement front with a stoop and a door at New Bricks City scale (68 high, 48 wide), and the lobby behind it. A player start and two gang spots.",
+      "skybox": "nbc_dusk",
+      "mapLump": "NBC_MAP",
+      "rooms": [
+        {
+          "id": "street",
+          "name": "Street",
+          "shape": "rect",
+          "x": -512,
+          "y": -384,
+          "width": 1024,
+          "height": 384,
+          "floorHeight": 0,
+          "ceilingHeight": 256,
+          "lightLevel": 176,
+          "theme": "nbc_street"
+        },
+        {
+          "id": "stoop",
+          "name": "Doorway",
+          "shape": "rect",
+          "x": -24,
+          "y": -8,
+          "width": 48,
+          "height": 24,
+          "floorHeight": 0,
+          "ceilingHeight": 72,
+          "lightLevel": 160,
+          "theme": "nbc_tenement"
+        },
+        {
+          "id": "lobby",
+          "name": "Tenement Lobby",
+          "shape": "rect",
+          "x": -192,
+          "y": 40,
+          "width": 384,
+          "height": 256,
+          "floorHeight": 0,
+          "ceilingHeight": 96,
+          "lightLevel": 160,
+          "theme": "nbc_tenement"
+        }
+      ],
+      "smartObjects": [
+        {
+          "id": "front_door",
+          "name": "Tenement Front Door",
+          "type": "door",
+          "x": -24,
+          "y": 16,
+          "width": 48,
+          "height": 24,
+          "theme": "nbc_tenement",
+          "lock": 0,
+          "speed": 16,
+          "wait": 150
+        }
+      ],
+      "links": [],
+      "things": [
+        {
+          "id": "th_start",
+          "type": 1,
+          "x": 0,
+          "y": -256,
+          "angle": 90
+        },
+        {
+          "id": "gang_1",
+          "type": 3004,
+          "x": -96,
+          "y": 192,
+          "angle": 270
+        },
+        {
+          "id": "gang_2",
+          "type": 3004,
+          "x": 128,
+          "y": 160,
+          "angle": 270
+        }
+      ]
+    },
+    "nbc_blank": {
+      "name": "Bricks: Blank Room",
+      "description": "One brick tenement room at New Bricks City scale with a player start.",
+      "skybox": "nbc_dusk",
+      "mapLump": "NBC_MAP",
+      "rooms": [
+        {
+          "id": "room_1",
+          "name": "Room",
+          "shape": "rect",
+          "x": -192,
+          "y": -192,
+          "width": 384,
+          "height": 384,
+          "floorHeight": 0,
+          "ceilingHeight": 96,
+          "lightLevel": 160,
+          "theme": "nbc_tenement"
+        }
+      ],
+      "smartObjects": [],
+      "links": [],
+      "things": [
+        {
+          "id": "th_start",
+          "type": 1,
+          "x": 0,
+          "y": 0,
+          "angle": 90
+        }
+      ]
+    }
+  },
+  "doorwayNote": "A door between spaces of different heights opens to the lower neighbour's ceiling and shows its door texture up the taller side: give it a doorway (a small room at door height + 4, 72) on the tall side, like nbc_block's stoop.",
+  "heightPresets": [
+    72,
+    80,
+    96,
+    112,
+    128,
+    256
+  ]
+}

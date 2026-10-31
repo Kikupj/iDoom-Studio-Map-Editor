@@ -310,7 +310,7 @@
     if (state.history.length === 0) return;
     state.redoStack.push(JSON.stringify(state.project));
     state.project = JSON.parse(state.history.pop());
-    if (skyboxSelect && state.project.skybox) skyboxSelect.value = state.project.skybox;
+    if (skyboxSelect && state.project.skybox) skyboxSelect.value = state.project.skybox; syncMapLumpInput();
     compileAndSync();
     renderInspector();
     showToast('Undid last change');
@@ -320,7 +320,7 @@
     if (state.redoStack.length === 0) return;
     state.history.push(JSON.stringify(state.project));
     state.project = JSON.parse(state.redoStack.pop());
-    if (skyboxSelect && state.project.skybox) skyboxSelect.value = state.project.skybox;
+    if (skyboxSelect && state.project.skybox) skyboxSelect.value = state.project.skybox; syncMapLumpInput();
     compileAndSync();
     renderInspector();
     showToast('Redid change');
@@ -448,7 +448,7 @@
     state.syncConflict = false;
     if (!findItemById(selected)) state.selectedId = null;
     projectNameInput.value = state.project.name || 'Untitled map';
-    if (skyboxSelect && state.project.skybox) skyboxSelect.value = state.project.skybox;
+    if (skyboxSelect && state.project.skybox) skyboxSelect.value = state.project.skybox; syncMapLumpInput();
     await compileAndSync({ publish: false });
     await refreshDiskMetadata();
     updateSaveStatus();
@@ -621,7 +621,7 @@
 
     // 3. Draw Rooms (and Room Half-Floors / Mezzanines)
     for (const room of state.project.rooms || []) {
-      const theme = state.catalog.themes[room.theme || 'techbase'] || {};
+      const theme = state.catalog.themes[room.theme || defaultThemeId()] || {};
       const isSel = room.id === state.selectedId;
       const isHov = room.id === state.hoveredId;
 
@@ -953,11 +953,14 @@
         `;
       }
 
-      const actorCategories = [
+      // the game profile's categories (its own things included), else Doom's
+      const profileCategories = (state.catalog.profile?.thingCategories || []).filter(category => state.catalog.things.some(item => item.category === category.id));
+      const actorCategories = profileCategories.length ? [{ id: 'all', label: 'All' }, ...profileCategories] : [
         { id: 'all', label: 'All' }, { id: 'keys', label: 'Keys' }, { id: 'pickups', label: 'Pickups' },
         { id: 'weapons', label: 'Weapons' }, { id: 'monsters', label: 'Monsters' }, { id: 'props', label: 'Props' }, { id: 'starts', label: 'Starts' }
       ];
-      const visibleActors = state.catalog.things.filter(item => state.activeActorCategory === 'all' || item.category === state.activeActorCategory);
+      const setAside = state.catalog.profile?.otherThingCategory;
+      const visibleActors = state.catalog.things.filter(item => state.activeActorCategory === 'all' ? item.category !== setAside : item.category === state.activeActorCategory);
       html += `
         <div class="insp-card">
           <div class="insp-section-title">Actor Palette (Click Canvas to Place)</div>
@@ -967,7 +970,7 @@
           <div class="actor-grid">
             ${visibleActors.map(item => `
               <button class="actor-card ${item.type === currentType ? 'active' : ''}" data-thing-type="${item.type}">
-                <img src="/api/sprite/${item.sprite}" alt="${item.name}" />
+                ${item.sprite ? `<img src="/api/sprite/${item.sprite}" alt="${item.name}" loading="lazy" />` : `<span class="actor-noimg" style="border-color:${item.color || '#a3a3a3'}" title="${item.look === 'model' ? '3D model' : (item.look === 'voxel' ? 'Voxel' : 'No sprite')}">${item.look === 'model' ? '3D' : (item.look === 'voxel' ? 'VOX' : (item.name || '?').slice(0, 2))}</span>`}
                 <span>${item.name}</span>
               </button>
             `).join('')}
@@ -980,7 +983,7 @@
       inspectorContent.querySelectorAll('[data-actor-category]').forEach(btn => {
         btn.addEventListener('click', () => {
           state.activeActorCategory = btn.dataset.actorCategory;
-          const filtered = state.catalog.things.filter(item => state.activeActorCategory === 'all' || item.category === state.activeActorCategory);
+          const filtered = state.catalog.things.filter(item => state.activeActorCategory === 'all' ? item.category !== state.catalog.profile?.otherThingCategory : item.category === state.activeActorCategory);
           if (filtered.length && !filtered.some(item => item.type === state.activeThingType)) state.activeThingType = filtered[0].type;
           renderInspector();
         });
@@ -1034,7 +1037,7 @@
     // 2. Room Space Inspector (with Multi-Level / Half-Floor Mezzanine & Skybox Controls!)
     if (sel && sel.kind === 'room') {
       const r = sel.item;
-      const theme = state.catalog.themes[r.theme || 'techbase'] || state.catalog.themes.techbase || {};
+      const theme = state.catalog.themes[r.theme || defaultThemeId()] || state.catalog.themes[defaultThemeId()] || {};
       const wallTex = r.wallTexture || theme.wall || 'STARTAN2';
       const floorTex = r.floorTexture || theme.floor || 'FLOOR4_8';
       const ceilTex = r.ceilingTexture || theme.ceiling || 'CEIL3_5';
@@ -1084,7 +1087,7 @@
               <input type="range" id="inspRoomHeight" min="32" max="768" step="8" value="${roomHeight}" />
             </div>
             <div class="preset-pills">
-              ${[96, 128, 160, 192, 256, 384].map(h =>
+              ${(state.catalog.profile?.heightPresets || [96, 128, 160, 192, 256, 384]).map(h =>
         `<button class="mini-pill ${roomHeight === h ? 'active' : ''}" data-preset-height="${h}">${h}u</button>`
       ).join('')}
             </div>
@@ -1173,8 +1176,8 @@
         <div class="insp-card">
           <div class="insp-section-title">Curated Material Theme</div>
           <div class="theme-grid">
-            ${Object.values(state.catalog.themes).map(t => `
-              <button class="theme-card ${(r.theme || 'techbase') === t.id ? 'active' : ''}" data-theme="${t.id}">
+            ${orderedThemes().map(t => `
+              <button class="theme-card ${(r.theme || defaultThemeId()) === t.id ? 'active' : ''}" data-theme="${t.id}">
                 <img class="theme-thumb" src="/api/texture/${t.wall}" alt="${t.name}" />
                 <div class="theme-meta">
                   <strong>${t.name}</strong>
@@ -1495,7 +1498,7 @@
           </div>
         `;
       } else if (o.type === 'window') {
-        const theme = state.catalog.themes[o.theme || 'techbase'] || {};
+        const theme = state.catalog.themes[o.theme || defaultThemeId()] || {};
         const frameTex = o.wallTexture || theme.trim || 'SHAWN2';
         const sillFlat = o.floorTexture || 'FLAT23';
         const topFlat = o.skyWindow ? 'F_SKY1' : (o.ceilingTexture || 'FLAT23');
@@ -1941,6 +1944,89 @@
     showToast('Duplicated item');
   }
 
+  // ---- the game profile (New Bricks City by default): its themes, skies, starter maps and map lump in the UI
+  function defaultThemeId() {
+    return state.catalog.defaultTheme || 'techbase';
+  }
+  function bySourceFirst(list) {
+    return [...list.filter(item => item.source === 'profile'), ...list.filter(item => item.source !== 'profile')];
+  }
+  function orderedThemes() {
+    return bySourceFirst(Object.values(state.catalog.themes || {}));
+  }
+  function escapeHtml(text) {
+    return String(text ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  // the context menu's two quick actors: the first catalog thing in these categories
+  function contextThingType(categories, fallback) {
+    for (const category of categories) {
+      const thing = (state.catalog.things || []).find(item => item.category === category);
+      if (thing) return thing.type;
+    }
+    return fallback;
+  }
+  function syncMapLumpInput() {
+    const input = document.getElementById('mapLumpInput');
+    if (input && state.project) input.value = state.project.mapLump || '';
+  }
+  function applyProfileToUi(catalog) {
+    const profile = catalog.profile;
+    if (skyboxSelect) {
+      skyboxSelect.innerHTML = bySourceFirst(Object.values(catalog.skyboxes || {}))
+        .map(sky => `<option value="${escapeHtml(sky.id)}">${escapeHtml(sky.name)}</option>`).join('');
+    }
+    const themeSelect = document.getElementById('magicThemeSelect');
+    if (themeSelect) {
+      themeSelect.innerHTML = orderedThemes().map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.name)} (${escapeHtml(t.wall)} / ${escapeHtml(t.floor)})</option>`).join('');
+      themeSelect.value = defaultThemeId();
+    }
+    if (templatesMenu) {
+      templatesMenu.innerHTML = '<div class="dropdown-header">Starter Spaces</div>' + bySourceFirst(Object.entries(catalog.starterMaps || {}).map(([id, map]) => ({ id, ...map })))
+        .map(map => `<button class="dropdown-item" data-template="${escapeHtml(map.id)}"><strong>${escapeHtml(map.name)}</strong><span>${escapeHtml(map.description || '')}</span></button>`).join('');
+      templatesMenu.querySelectorAll('[data-template]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const tplId = btn.dataset.template;
+          const tpl = state.catalog.starterMaps[tplId];
+          if (!tpl) return;
+          await createNewProject(tplId, `Loaded template: ${tpl.name}`);
+        });
+      });
+    }
+    const subtitle = document.querySelector('#textureModal .modal-subtitle');
+    if (subtitle && profile) {
+      subtitle.textContent = profile.modLoaded ? `${profile.name}: the mod's own textures (${profile.modDir}) over Freedoom 2` : `Freedoom 2 only (the ${profile.name} mod folder wasn't found)`;
+    }
+    if (badge3DMode) badge3DMode.textContent = `3D Live Preview (${profile?.name || 'Freedoom2'} textures)`;
+    if (profile && profile.id !== 'freedoom' && !profile.modLoaded) {
+      showToast(`The ${profile.name} mod folder wasn't found: only Freedoom textures and things are loaded. Set IDOOM_MOD_DIR or modDir in studio.config.json.`);
+    }
+    // the context menu names what it places
+    const impItem = document.getElementById('ctxAddImp');
+    const lootItem = document.getElementById('ctxAddShotgun');
+    const nameOf = type => (catalog.things || []).find(item => item.type === type)?.name;
+    if (impItem) impItem.textContent = `👾 Place ${nameOf(contextThingType(['gang', 'monsters'], 3001)) || 'Monster'} Here`;
+    if (lootItem) lootItem.textContent = `🔫 Place ${nameOf(contextThingType(['weapons', 'pickups', 'props'], 2001)) || 'Item'} Here`;
+    const lumpInput = document.getElementById('mapLumpInput');
+    if (lumpInput) {
+      lumpInput.placeholder = profile?.defaults?.mapLump || 'MAP01';
+      lumpInput.addEventListener('change', () => {
+        if (!state.project) return;
+        const value = lumpInput.value.trim().toUpperCase();
+        if (value && !/^[A-Z0-9_]{1,8}$/.test(value)) {
+          showToast('A map lump is 1 to 8 letters, digits or underscores (e.g. NBC_HUB).');
+          syncMapLumpInput();
+          return;
+        }
+        pushHistory();
+        if (value) state.project.mapLump = value;
+        else delete state.project.mapLump;
+        lumpInput.value = value;
+        compileAndSync();
+        showToast(value ? `Map lump: ${value}` : 'Map lump cleared (the profile default is used)');
+      });
+    }
+  }
+
   // Texture & Flat Browser Modal
   let textureModalCallback = null;
   let currentModalKind = 'texture';
@@ -1951,11 +2037,37 @@
     const modal = document.getElementById('textureModal');
     const title = document.getElementById('textureModalTitle');
     const search = document.getElementById('textureSearchInput');
-    title.textContent = kind === 'texture' ? 'Select Wall Texture (Freedoom2 WAD)' : 'Select Floor / Ceiling Flat (Freedoom2 WAD)';
+    title.textContent = kind === 'texture' ? 'Select Wall Texture' : 'Select Floor / Ceiling Flat';
     search.value = '';
     modal.classList.remove('hidden');
+    renderTextureGroupTabs();
     renderTextureGrid('');
     search.focus();
+  }
+
+  // the game profile's texture groups (the mod's own first, then the IWAD's), as tabs over the grid
+  let currentTextureGroup = 'all';
+  function textureGroupOf(name) {
+    return state.catalog.wad.groups?.[name] || '';
+  }
+  function renderTextureGroupTabs() {
+    const groups = (state.catalog.profile?.textureGroups || []).filter(group => group.id !== 'hidden');
+    let tabs = document.getElementById('textureGroupTabs');
+    if (!groups.length) { if (tabs) tabs.remove(); return; }
+    if (!tabs) {
+      tabs = document.createElement('div');
+      tabs.id = 'textureGroupTabs';
+      tabs.className = 'actor-category-tabs texture-group-tabs';
+      const grid = document.getElementById('textureGrid');
+      grid.parentNode.insertBefore(tabs, grid);
+    }
+    tabs.innerHTML = [{ id: 'all', label: 'All' }, ...groups].map(group =>
+      `<button class="mini-pill ${currentTextureGroup === group.id ? 'active' : ''}" data-tex-group="${group.id}">${group.label}</button>`).join('');
+    tabs.querySelectorAll('[data-tex-group]').forEach(btn => btn.addEventListener('click', () => {
+      currentTextureGroup = btn.dataset.texGroup;
+      renderTextureGroupTabs();
+      renderTextureGrid(document.getElementById('textureSearchInput').value);
+    }));
   }
 
   function renderTextureGrid(filterText) {
@@ -1965,7 +2077,8 @@
       ? state.catalog.wad.textures.map(t => t.name)
       : ['F_SKY1', ...state.catalog.wad.flats];
 
-    const filtered = items.filter(name => !q || name.includes(q)).slice(0, 120);
+    const inGroup = name => name === 'F_SKY1' || (currentTextureGroup === 'all' ? textureGroupOf(name) !== 'hidden' : textureGroupOf(name) === currentTextureGroup);
+    const filtered = items.filter(name => (!q || name.includes(q)) && inGroup(name)).slice(0, 240);
     grid.innerHTML = filtered.map(name => {
       const imgUrl = name === 'F_SKY1'
         ? `/api/texture/${state.compiled?.skybox?.texture || 'SKY1'}`
@@ -2169,7 +2282,7 @@
       state.redoStack = [];
       state.storage = { ...(state.storage || {}), projectId: result.projectId, namedProject: state.namedProject, savedRevision: result.revision };
       projectNameInput.value = state.project.name || name;
-      if (skyboxSelect && state.project.skybox) skyboxSelect.value = state.project.skybox;
+      if (skyboxSelect && state.project.skybox) skyboxSelect.value = state.project.skybox; syncMapLumpInput();
       state.selectedId = null;
       await compileAndSync({ publish: false });
       fitView2D();
@@ -2210,7 +2323,7 @@
       state.redoStack = [];
       state.selectedId = null;
       projectNameInput.value = state.project.name || 'Untitled map';
-      if (skyboxSelect && state.project.skybox) skyboxSelect.value = state.project.skybox;
+      if (skyboxSelect && state.project.skybox) skyboxSelect.value = state.project.skybox; syncMapLumpInput();
       await compileAndSync({ publish: false });
       fitView2D();
       renderer3D.resetCamera();
@@ -2331,6 +2444,8 @@
         const problem = await res.json();
         throw new Error(problem.error || 'WAD export failed.');
       }
+      const modPath = res.headers.get('X-Mod-Path');
+      const mapinfo = res.headers.get('X-Mapinfo');
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -2339,7 +2454,15 @@
       a.download = `${safeName}.wad`;
       a.click();
       URL.revokeObjectURL(url);
-      showToast(`Exported ${safeName}.wad (also saved in maps/)`);
+      if (modPath) {
+        showToast(`Exported ${safeName}.wad, and into the mod as ${modPath}`);
+        if (mapinfo) {
+          // a new map needs an entry in the mod's MAPINFO (the WAD carries none of its own)
+          document.getElementById('udmfCodePreview').textContent =
+            `// The map is in the mod: ${modPath}\n// If it's a new map, add this entry to the mod's MAPINFO (the WAD has no ZMAPINFO of its own):\n\n${decodeURIComponent(mapinfo)}\n`;
+          document.getElementById('udmfModal').classList.remove('hidden');
+        }
+      } else showToast(`Exported ${safeName}.wad (also saved in maps/)`);
     } catch (error) {
       showToast(`Export failed: ${error.message}`);
     }
@@ -2395,7 +2518,7 @@
         if (document.pointerLockElement) document.exitPointerLock?.();
         renderer3D.setMode('orbit');
         walkthroughOverlay.classList.add('hidden');
-        badge3DMode.textContent = '3D Live Preview (Freedoom2 Textures)';
+        badge3DMode.textContent = `3D Live Preview (${state.catalog.profile?.name || 'Freedoom2'} textures)`;
         hud3DHint.textContent = 'Left-drag to Orbit · Right-drag to Pan (1:1 screen direction) · Scroll to Zoom · Click in 3D to select';
       }
       setTimeout(() => {
@@ -2452,14 +2575,14 @@
   document.getElementById('ctxAddImp').addEventListener('click', () => {
     pushHistory();
     const id = `th_${Date.now().toString(36)}`;
-    state.project.things.push({ id, type: 3001, x: state.contextWorld.x, y: state.contextWorld.y, angle: 0 });
+    state.project.things.push({ id, type: contextThingType(['gang', 'monsters'], 3001), x: state.contextWorld.x, y: state.contextWorld.y, angle: 0 });
     selectObject(id);
     compileAndSync();
   });
   document.getElementById('ctxAddShotgun').addEventListener('click', () => {
     pushHistory();
     const id = `th_${Date.now().toString(36)}`;
-    state.project.things.push({ id, type: 2001, x: state.contextWorld.x, y: state.contextWorld.y, angle: 0 });
+    state.project.things.push({ id, type: contextThingType(['weapons', 'pickups', 'props'], 2001), x: state.contextWorld.x, y: state.contextWorld.y, angle: 0 });
     selectObject(id);
     compileAndSync();
   });
@@ -2711,9 +2834,9 @@
           width: Math.max(64, b.width),
           height: Math.max(64, b.height),
           floorHeight: 0,
-          ceilingHeight: 128,
-          lightLevel: 168,
-          theme: 'techbase'
+          ceilingHeight: state.catalog.profile?.defaults?.roomCeiling || 128,
+          lightLevel: state.catalog.profile?.defaults?.roomLight || 168,
+          theme: defaultThemeId()
         };
         state.project.rooms.push(newRoom);
         selectObject(id);
@@ -2726,7 +2849,7 @@
           y: b.y,
           width: b.width,
           height: b.height,
-          theme: 'techbase'
+          theme: defaultThemeId()
         };
         if (d.tool === '3dfloor') {
           newObj.style = 'solid';
@@ -2899,6 +3022,7 @@
     const catalog = await res.json();
     state.catalog = catalog;
     renderer3D.setThingCatalog(catalog.things);
+    applyProfileToUi(catalog);
 
     const sessionRes = await fetch('/api/session');
     const session = await sessionRes.json();
@@ -2911,7 +3035,8 @@
     state.diskDirty = !session.storage?.diskSaved;
     state.mapCheck = session.mapCheck || null;
     projectNameInput.value = state.project.name;
-    if (skyboxSelect) skyboxSelect.value = state.project.skybox || 'diorama_tech';
+    if (skyboxSelect) skyboxSelect.value = state.project.skybox || catalog.defaultSkybox || 'diorama_tech';
+    syncMapLumpInput();
     selectObject('room_entry');
 
     state.eventSource = new EventSource('/api/session/events');

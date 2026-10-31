@@ -22,6 +22,8 @@
         <div class="brand-titles">
           <input id="projectNameInput" class="project-title-input" type="text" value="UAC Outpost Alpha"
             spellcheck="false" />
+          <input id="mapLumpInput" class="map-lump-input" type="text" maxlength="8" placeholder="MAP01" spellcheck="false"
+            title="The map lump the WAD and the playtest use (e.g. NBC_HUB). Empty: the game profile's default." />
           <span id="statusMetrics" class="status-metrics">Compiling UDMF...</span>
         </div>
       </div>
@@ -284,17 +286,17 @@
     <button id="ctxDelete" class="ctx-item danger">Delete Selected (⌫)</button>
   </div>
 
-  <!-- Freedoom2 Texture & Flat Browser Modal -->
+  <!-- Texture & Flat Browser Modal (the game profile's mod over the IWAD) -->
   <div id="textureModal" class="modal-backdrop hidden">
     <div class="modal-window">
       <div class="modal-header">
         <div>
           <h3 id="textureModalTitle">Select Surface Material</h3>
-          <p class="modal-subtitle">Loaded live from <code>freedoom-0.13.0/freedoom2.wad</code></p>
+          <p class="modal-subtitle">Loaded live from the mod folder and <code>freedoom-0.13.0/freedoom2.wad</code></p>
         </div>
         <div class="modal-search-wrap">
           <input id="textureSearchInput" type="search"
-            placeholder="Search 960+ textures (e.g. STARTAN, DOOR, MARBLE, SKY)..." />
+            placeholder="Search textures (e.g. BRICK, CONC, DOOR, SKY)..." />
           <button id="closeTextureModalBtn" class="icon-btn">✕</button>
         </div>
       </div>

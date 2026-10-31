@@ -320,5 +320,5 @@ class WadReader {
   }
 }
 
-module.exports = { WadReader };
+module.exports = { WadReader, encodePNG };
 
